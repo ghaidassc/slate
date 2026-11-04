@@ -5,7 +5,6 @@ import Model.Pengguna;
 import Model.StafPenjualan;
 import Util.SesiPengguna;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
@@ -31,7 +30,6 @@ import javax.swing.event.DocumentListener;
 
 public class FormPencatatanPesanan extends javax.swing.JFrame {
 
-    // Helper item untuk ComboBox Pelanggan
     private static class ItemPelanggan {
         final int id;
         final String namaUsaha;
@@ -47,7 +45,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         }
     }
 
-    // Helper item untuk ComboBox Produk Semen
     private static class ItemProduk {
         final int id;
         final String nama;
@@ -69,7 +66,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         }
     }
 
-    // Helper keranjang item pesanan
     private static class ItemKeranjang {
         final ItemProduk produk;
         final int jumlah;
@@ -83,16 +79,18 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     }
 
     private final ArrayList<ItemKeranjang> listKeranjang = new ArrayList<>();
+    private final ArrayList<ItemProduk> cacheProduk = new ArrayList<>();
     private String metodePembayaranPilihan = "Tunai";
     private double akumulasiTotalTagihan = 0;
 
     public FormPencatatanPesanan() {
         initComponents();
+        this.setSize(1080, 680);
         this.setLocationRelativeTo(null);
         rapikanTampilan();
         pasangLogoSidebar();
 
-        // Tampilkan info staf yang login
+        // 1. Tampilkan data staf yang login
         try {
             Pengguna currentUser = SesiPengguna.getPengguna();
             if (currentUser instanceof StafPenjualan) {
@@ -102,17 +100,11 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             }
         } catch (Exception ignored) {}
 
-        // Navigasi menu sidebar
-        btnNavStatus.addActionListener(evt -> {
-            new FormStatusPengiriman().setVisible(true);
-            dispose();
-        });
-
-        // Muat data dari database
+        // 2. Muat data dari database yang sama dengan Admin Gudang
         loadDataPelangganKeCombo();
         loadDataProdukKeCombo();
 
-        // Pasang event kalkulasi otomatis dan aksi tombol
+        // 3. Pasang logika perhitungan dan event
         initLogikaTransaksi();
     }
 
@@ -135,49 +127,33 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
                 cmbPelanggan.addItem(new ItemPelanggan(rs.getInt("id_pelanggan"), rs.getString("nama_usaha")).toString());
             }
         } catch (SQLException ex) {
-            // Data fallback jika koneksi belum siap
-            cmbPelanggan.addItem("[ID: 1] Toko Bangunan Maju Jaya");
-            cmbPelanggan.addItem("[ID: 2] CV Karya Mandiri");
+            JOptionPane.showMessageDialog(this, "Gagal memuat pelanggan: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    private final ArrayList<ItemProduk> cacheProduk = new ArrayList<>();
-
+    // Mengambil langsung dari tabel semen agar 100% sinkron dengan Admin Gudang
     private void loadDataProdukKeCombo() {
         cmbProduk.removeAllItems();
         cacheProduk.clear();
 
-        // Ambil semen yang aktif dan stok fisik dari tabel semen & stok_gudang
-        String sql = "SELECT s.id_semen, s.tipe_semen, s.jenis_kemasan, s.harga_satuan, " +
-                     "COALESCE(sg.jumlah_stok, 5000) AS stok " +
-                     "FROM semen s " +
-                     "LEFT JOIN stok_gudang sg ON s.id_semen = sg.semen_id_semen";
+        String sql = "SELECT id_semen, nama_semen, satuan, harga_jual_rp, stok_qty FROM semen ORDER BY id_semen ASC";
         try (Connection conn = Koneksi.getKoneksi();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 int id = rs.getInt("id_semen");
-                String tipe = rs.getString("tipe_semen");
-                String kemasan = rs.getString("jenis_kemasan");
-                double harga = rs.getDouble("harga_satuan");
-                int stok = rs.getInt("stok");
-                String satuan = kemasan.toLowerCase().contains("curah") ? "Ton" : "Sak";
+                String nama = rs.getString("nama_semen");
+                String satuan = rs.getString("satuan");
+                double harga = rs.getDouble("harga_jual_rp");
+                int stok = rs.getInt("stok_qty");
 
-                String namaProduk = "Semen " + kemasan + " (" + tipe + ")";
-                ItemProduk item = new ItemProduk(id, namaProduk, harga, stok, satuan);
+                ItemProduk item = new ItemProduk(id, nama, harga, stok, satuan);
                 cacheProduk.add(item);
                 cmbProduk.addItem(item.toString());
             }
         } catch (SQLException ex) {
-            // Data bawaan pabrik/dump
-            cacheProduk.add(new ItemProduk(1, "Semen Sak 50kg (PCC)", 68000, 10000, "Sak"));
-            cacheProduk.add(new ItemProduk(2, "Semen Sak 40kg (PCC)", 55000, 8000, "Sak"));
-            cacheProduk.add(new ItemProduk(3, "Semen Curah (OPC)", 1100000, 500, "Ton"));
-
-            for (ItemProduk p : cacheProduk) {
-                cmbProduk.addItem(p.toString());
-            }
+            JOptionPane.showMessageDialog(this, "Gagal memuat produk semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
 
         updateTampilanProdukDanStok();
@@ -246,19 +222,16 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         lblTotalHarga.setText("Rp " + formatRupiah(total));
         akumulasiTotalTagihan = total;
 
-        // Auto isi nominal bayar sesuai status bayar
         if (cmbStatusBayar.getSelectedIndex() == 1) { // Lunas
             txtNominalBayar.setText(String.valueOf((long) total));
         } else {
-            txtNominalBayar.setText(String.valueOf((long) (total / 2))); // DP 50% default
+            txtNominalBayar.setText(String.valueOf((long) (total / 2)));
         }
     }
 
     private void initLogikaTransaksi() {
-        // Dropdown produk ganti -> Update info stok & hitung subtotal
         cmbProduk.addActionListener(e -> updateTampilanProdukDanStok());
 
-        // Field Jumlah diketik -> Kalkulasi real-time
         txtJumlah.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) { hitungSubtotalItem(); }
@@ -268,7 +241,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             public void changedUpdate(DocumentEvent e) { hitungSubtotalItem(); }
         });
 
-        // Tombol + Masukkan ke Daftar Item
         btnTambahItem.addActionListener(e -> {
             int idx = cmbProduk.getSelectedIndex();
             if (idx < 0 || idx >= cacheProduk.size()) {
@@ -306,16 +278,14 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             }
         });
 
-        // Status bayar berubah -> Sesuaikan nominal uang muka/lunas
         cmbStatusBayar.addActionListener(e -> {
-            if (cmbStatusBayar.getSelectedIndex() == 1) { // Lunas
+            if (cmbStatusBayar.getSelectedIndex() == 1) {
                 txtNominalBayar.setText(String.valueOf((long) akumulasiTotalTagihan));
             } else {
                 txtNominalBayar.setText(String.valueOf((long) (akumulasiTotalTagihan / 2)));
             }
         });
 
-        // Reset keranjang awal
         refreshTampilanDaftarItem();
     }
 
@@ -331,14 +301,14 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     private void pasangLogoSidebar() {
         try {
             BufferedImage imgAsli = null;
-            String[] jalur = {
+            String[] daftarJalur = {
                 "src/main/java/view/logo_slate.png.jpg",
                 "src/main/java/view/logo_slate.png",
                 "src/main/java/view/logonew.jpg"
             };
 
-            for (String j : jalur) {
-                File f = new File(j);
+            for (String jalur : daftarJalur) {
+                File f = new File(jalur);
                 if (f.exists()) {
                     imgAsli = ImageIO.read(f);
                     break;
@@ -369,7 +339,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         panelSidebar = new javax.swing.JPanel();
@@ -478,7 +448,8 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnNavMenu.setMargin(new java.awt.Insets(2, 18, 2, 14));
         btnNavMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnNavMenuActionPerformed(evt);
+                new FormMenuStaf().setVisible(true);
+                dispose();
             }
         });
 
@@ -492,7 +463,8 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnNavPelanggan.setMargin(new java.awt.Insets(2, 18, 2, 14));
         btnNavPelanggan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnNavPelangganActionPerformed(evt);
+                new FormKelolaPelanggan().setVisible(true);
+                dispose();
             }
         });
 
@@ -514,6 +486,12 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnNavStatus.setFocusPainted(false);
         btnNavStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnNavStatus.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavStatus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                new FormStatusPengiriman().setVisible(true);
+                dispose();
+            }
+        });
 
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
         btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12));
@@ -524,7 +502,12 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnLogout.setFocusPainted(false);
         btnLogout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLogoutActionPerformed(evt);
+                int confirm = JOptionPane.showConfirmDialog(FormPencatatanPesanan.this, "Apakah Anda yakin ingin keluar?", "Konfirmasi Logout", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    SesiPengguna.setPengguna(null);
+                    new FormLogin().setVisible(true);
+                    dispose();
+                }
             }
         });
 
@@ -600,7 +583,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         lblJumlah.setText("Jumlah Pesanan (Sak/Ton)");
 
         txtJumlah.setFont(new java.awt.Font("Segoe UI", 1, 12));
-        txtJumlah.setText("");
 
         lblSubtotalItem.setFont(new java.awt.Font("Segoe UI", 1, 11));
         lblSubtotalItem.setForeground(new java.awt.Color(71, 85, 105));
@@ -793,7 +775,14 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnMetodeTunai.setFocusPainted(false);
         btnMetodeTunai.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMetodeTunaiActionPerformed(evt);
+                metodePembayaranPilihan = "Tunai";
+                btnMetodeTunai.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                btnMetodeTunai.setForeground(new Color(234, 88, 12));
+                btnMetodeTunai.setBorder(new LineBorder(new Color(234, 88, 12), 1, true));
+
+                btnMetodeTransfer.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                btnMetodeTransfer.setForeground(new Color(71, 85, 105));
+                btnMetodeTransfer.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
             }
         });
 
@@ -804,7 +793,14 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnMetodeTransfer.setFocusPainted(false);
         btnMetodeTransfer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnMetodeTransferActionPerformed(evt);
+                metodePembayaranPilihan = "Transfer";
+                btnMetodeTransfer.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                btnMetodeTransfer.setForeground(new Color(234, 88, 12));
+                btnMetodeTransfer.setBorder(new LineBorder(new Color(234, 88, 12), 1, true));
+
+                btnMetodeTunai.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+                btnMetodeTunai.setForeground(new Color(71, 85, 105));
+                btnMetodeTunai.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
             }
         });
 
@@ -912,41 +908,9 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        new FormMenuStaf().setVisible(true);
-        this.dispose();
-    }                                          
-
-    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {                                                
-        new FormKelolaPelanggan().setVisible(true);
-        this.dispose();
-    }                                               
-
-    private void btnMetodeTunaiActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        metodePembayaranPilihan = "Tunai";
-        btnMetodeTunai.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnMetodeTunai.setForeground(new Color(234, 88, 12));
-        btnMetodeTunai.setBorder(new LineBorder(new Color(234, 88, 12), 1, true));
-
-        btnMetodeTransfer.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btnMetodeTransfer.setForeground(new Color(71, 85, 105));
-        btnMetodeTransfer.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
-    }                                              
-
-    private void btnMetodeTransferActionPerformed(java.awt.event.ActionEvent evt) {                                                  
-        metodePembayaranPilihan = "Transfer";
-        btnMetodeTransfer.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        btnMetodeTransfer.setForeground(new Color(234, 88, 12));
-        btnMetodeTransfer.setBorder(new LineBorder(new Color(234, 88, 12), 1, true));
-
-        btnMetodeTunai.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btnMetodeTunai.setForeground(new Color(71, 85, 105));
-        btnMetodeTunai.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
-    }                                                 
-
-    private void btnCatatPesananActionPerformed(java.awt.event.ActionEvent evt) {                                                
+    private void btnCatatPesananActionPerformed(java.awt.event.ActionEvent evt) {
         if (listKeranjang.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Keranjang pesanan masih kosong! Tambahkan item semen terlebih dahulu.", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
@@ -957,7 +921,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             return;
         }
 
-        // Ambil ID Pelanggan dari teks "[ID: X] Nama Usaha"
+        // Ambil ID Pelanggan
         String teksPelanggan = cmbPelanggan.getSelectedItem().toString();
         int idPelanggan = 1;
         try {
@@ -968,7 +932,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             }
         } catch (Exception ignored) {}
 
-        // Ambil ID Staf yang login
+        // Ambil ID Staf login
         int idStaf = 1;
         try {
             Pengguna currentUser = SesiPengguna.getPengguna();
@@ -977,7 +941,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             }
         } catch (Exception ignored) {}
 
-        // Ambil status bayar
         String statusBayar = cmbStatusBayar.getSelectedIndex() == 1 ? "Lunas" : "Belum Lunas";
         String nominalStr = txtNominalBayar.getText().replace(".", "").replace(",", "").trim();
         double nominalBayar = nominalStr.isEmpty() ? 0 : Double.parseDouble(nominalStr);
@@ -985,76 +948,104 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         Connection conn = null;
         try {
             conn = Koneksi.getKoneksi();
-            conn.setAutoCommit(false); // Transaksi Database (Atomic)
+            conn.setAutoCommit(false); // Transaksi Atomic
 
-            // 1. Simpan ke tabel pembayaran
-            String sqlBayar = "INSERT INTO pembayaran (metode_pembayaran, status_pembayaran, jumlah_bayar, tanggal_pembayaran) VALUES (?, ?, ?, NOW())";
-            int idPembayaranBaru = 0;
-            try (PreparedStatement psBayar = conn.prepareStatement(sqlBayar, Statement.RETURN_GENERATED_KEYS)) {
-                psBayar.setString(1, metodePembayaranPilihan);
-                psBayar.setString(2, statusBayar);
+            // Matikan sementara pengecekan Foreign Key agar tidak circular dependency saat insert
+            try (Statement st = conn.createStatement()) {
+                st.execute("SET FOREIGN_KEY_CHECKS = 0");
+            }
+
+            // 1. Generate ID Pesanan dan Pembayaran berikutnya
+            int nextIdPesanan = 1;
+            String sqlMaxP = "SELECT COALESCE(MAX(id_pesanan), 0) + 1 AS next_id FROM pesanan";
+            try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sqlMaxP)) {
+                if (rs.next()) nextIdPesanan = rs.getInt("next_id");
+            }
+
+            int nextIdBayar = 1;
+            String sqlMaxB = "SELECT COALESCE(MAX(id_pembayaran), 0) + 1 AS next_id FROM pembayaran";
+            try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sqlMaxB)) {
+                if (rs.next()) nextIdBayar = rs.getInt("next_id");
+            }
+
+            // 2. Simpan ke tabel pembayaran
+            String sqlBayar = "INSERT INTO pembayaran (id_pembayaran, tgl_bayar, metode_bayar, jumlah_bayar_rp, status, pesanan_id_pesanan) VALUES (?, CURDATE(), ?, ?, ?, ?)";
+            try (PreparedStatement psBayar = conn.prepareStatement(sqlBayar)) {
+                psBayar.setInt(1, nextIdBayar);
+                psBayar.setString(2, metodePembayaranPilihan);
                 psBayar.setDouble(3, nominalBayar);
+                psBayar.setString(4, statusBayar);
+                psBayar.setInt(5, nextIdPesanan);
                 psBayar.executeUpdate();
-
-                ResultSet rsKey = psBayar.getGeneratedKeys();
-                if (rsKey.next()) {
-                    idPembayaranBaru = rsKey.getInt(1);
-                }
             }
 
-            // 2. Simpan ke tabel pesanan
-            String sqlPesanan = "INSERT INTO pesanan (pelanggan_id_pelanggan, staf_penjualan_id_pengguna, pembayaran_id_pembayaran, tanggal_pesanan, total_tagihan, status_pesanan) VALUES (?, ?, ?, NOW(), ?, 'Diproses')";
-            int idPesananBaru = 0;
-            try (PreparedStatement psPesanan = conn.prepareStatement(sqlPesanan, Statement.RETURN_GENERATED_KEYS)) {
-                psPesanan.setInt(1, idPelanggan);
-                psPesanan.setInt(2, idStaf);
-                psPesanan.setInt(3, idPembayaranBaru);
-                psPesanan.setDouble(4, akumulasiTotalTagihan);
+            // 3. Simpan ke tabel pesanan
+            String sqlPesanan = "INSERT INTO pesanan (id_pesanan, tgl_pesanan, total_tagihan_rp, status, staf_penjualan_id_pengguna, pembayaran_id_pembayaran, pelanggan_id_pelanggan) VALUES (?, CURDATE(), ?, 'Diproses', ?, ?, ?)";
+            try (PreparedStatement psPesanan = conn.prepareStatement(sqlPesanan)) {
+                psPesanan.setInt(1, nextIdPesanan);
+                psPesanan.setDouble(2, akumulasiTotalTagihan);
+                psPesanan.setInt(3, idStaf);
+                psPesanan.setInt(4, nextIdBayar);
+                psPesanan.setInt(5, idPelanggan);
                 psPesanan.executeUpdate();
-
-                ResultSet rsKey = psPesanan.getGeneratedKeys();
-                if (rsKey.next()) {
-                    idPesananBaru = rsKey.getInt(1);
-                }
             }
 
-            // 3. Simpan detail item dan kurangi stok gudang
-            String sqlDetail = "INSERT INTO detail_pesanan (pesanan_id_pesanan, semen_id_semen, kuantitas_pesanan, subtotal) VALUES (?, ?, ?, ?)";
-            String sqlKurangStok = "UPDATE stok_gudang SET jumlah_stok = jumlah_stok - ? WHERE semen_id_semen = ?";
+            // 4. Simpan ke detail_pesanan & potong stok semen
+            String sqlDetail = "INSERT INTO detail_pesanan (id_detail, jumlah_qty, harga_satuan_rp, subtotal_rp, pesanan_id_pesanan, semen_id_semen) VALUES (?, ?, ?, ?, ?, ?)";
+            String sqlKurangStok = "UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ?";
+
+            int nextIdDetail = 1;
+            String sqlMaxD = "SELECT COALESCE(MAX(id_detail), 0) + 1 AS next_id FROM detail_pesanan";
+            try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(sqlMaxD)) {
+                if (rs.next()) nextIdDetail = rs.getInt("next_id");
+            }
 
             try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail);
                  PreparedStatement psStok = conn.prepareStatement(sqlKurangStok)) {
+
                 for (ItemKeranjang item : listKeranjang) {
-                    psDetail.setInt(1, idPesananBaru);
-                    psDetail.setInt(2, item.produk.id);
-                    psDetail.setInt(3, item.jumlah);
+                    psDetail.setInt(1, nextIdDetail++);
+                    psDetail.setInt(2, item.jumlah);
+                    psDetail.setDouble(3, item.produk.harga);
                     psDetail.setDouble(4, item.subtotal);
+                    psDetail.setInt(5, nextIdPesanan);
+                    psDetail.setInt(6, item.produk.id);
                     psDetail.executeUpdate();
 
-                    // Update stok fisik di gudang
                     psStok.setInt(1, item.jumlah);
                     psStok.setInt(2, item.produk.id);
                     psStok.executeUpdate();
                 }
             }
 
-            conn.commit(); // Simpan permanen
+            // Aktifkan kembali pengecekan Foreign Key
+            try (Statement st = conn.createStatement()) {
+                st.execute("SET FOREIGN_KEY_CHECKS = 1");
+            }
+
+            conn.commit(); // Simpan perubahan secara permanen
 
             JOptionPane.showMessageDialog(this,
-                    "Pesanan semen #" + idPesananBaru + " berhasil dicatat!\n" +
+                    "Pesanan semen #" + nextIdPesanan + " berhasil dicatat!\n" +
                     "Total Tagihan: Rp " + formatRupiah(akumulasiTotalTagihan) + "\n" +
-                    "Status Bayar: " + statusBayar,
+                    "Status Bayar: " + statusBayar + " (" + metodePembayaranPilihan + ")\n" +
+                    "Stok gudang telah berhasil dipotong.",
                     "Pencatatan Sukses",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Bersihkan form
+            // Reset form input & refresh produk
             listKeranjang.clear();
             refreshTampilanDaftarItem();
             loadDataProdukKeCombo();
 
         } catch (SQLException ex) {
             if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ignored) {}
+                try {
+                    conn.rollback();
+                    try (Statement st = conn.createStatement()) {
+                        st.execute("SET FOREIGN_KEY_CHECKS = 1");
+                    }
+                } catch (SQLException ignored) {}
             }
             JOptionPane.showMessageDialog(this, "Gagal mencatat pesanan: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         } finally {
@@ -1062,19 +1053,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
                 try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             }
         }
-    }                                               
-
-    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        int confirm = JOptionPane.showConfirmDialog(this,
-                "Apakah Anda yakin ingin keluar?",
-                "Konfirmasi Logout",
-                JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
-            SesiPengguna.setPengguna(null);
-            new FormLogin().setVisible(true);
-            this.dispose();
-        }
-    }                                         
+    }
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
@@ -1082,7 +1061,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCatatPesanan;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnMetodeTransfer;
@@ -1129,5 +1108,5 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     private javax.swing.JTextField txtJumlah;
     private javax.swing.JTextField txtNominalBayar;
     private javax.swing.JTextField txtSubtotalItem;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
 }

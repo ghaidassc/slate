@@ -83,7 +83,6 @@ public class FormLogin extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Login Sistem Informasi Semen");
-        setPreferredSize(new java.awt.Dimension(900, 560));
         setResizable(false);
 
         panelKiri.setBackground(new java.awt.Color(22, 27, 34));
@@ -148,7 +147,7 @@ public class FormLogin extends javax.swing.JFrame {
                     .addComponent(lblRole)
                     .addComponent(cmbRole, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnLogin, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(119, Short.MAX_VALUE))
         );
         panelKananLayout.setVerticalGroup(
             panelKananLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -169,7 +168,7 @@ public class FormLogin extends javax.swing.JFrame {
                 .addComponent(cmbRole, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(30, 30, 30)
                 .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(115, Short.MAX_VALUE))
         );
 
         getContentPane().add(panelKanan, java.awt.BorderLayout.CENTER);

@@ -14,7 +14,6 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -41,12 +40,22 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
     public FormStatusPengiriman() {
         initComponents();
+        this.setSize(1080, 680);
         this.setLocationRelativeTo(null);
         rapikanTampilanTambahan();
         pasangLogoSidebar();
+
+        // 1. Inisialisasi opsi ComboBox langsung dari kode (Aman dari bug parser NetBeans)
+        cmbUbahStatusBayar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {
+            "Belum Lunas", "Lunas"
+        }));
+
+        cmbUbahStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {
+            "Diproses", "Dikirim", "Diterima", "Refund"
+        }));
+
         desainTabelDanBadge();
 
-        // Tampilkan info sesi staf penjualan yang login
         try {
             Pengguna currentUser = SesiPengguna.getPengguna();
             if (currentUser instanceof StafPenjualan) {
@@ -56,16 +65,8 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             }
         } catch (Exception ignored) {}
 
-        // Sinkronkan pilihan status combobox sesuai data enum SQL
-        cmbUbahStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {
-            "Diproses", "Dikirim", "Diterima", "Refund"
-        }));
-
-        // Inisialisasi model tabel dan muat data
         modelTabel = (DefaultTableModel) tblPengiriman.getModel();
         loadDataTabelPengiriman();
-
-        // Pasang event listener
         initAksiPengiriman();
     }
 
@@ -79,9 +80,10 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
     private void loadDataTabelPengiriman() {
         modelTabel.setRowCount(0);
-        String sql = "SELECT p.id_pesanan, pl.nama_usaha, p.status " +
+        String sql = "SELECT p.id_pesanan, pl.nama_usaha, pb.status AS status_bayar, p.status AS status_kirim " +
                      "FROM pesanan p " +
                      "JOIN pelanggan pl ON p.pelanggan_id_pelanggan = pl.id_pelanggan " +
+                     "LEFT JOIN pembayaran pb ON p.pembayaran_id_pembayaran = pb.id_pembayaran " +
                      "ORDER BY p.id_pesanan ASC";
 
         try (Connection conn = Koneksi.getKoneksi();
@@ -91,9 +93,12 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             while (rs.next()) {
                 String id = String.valueOf(rs.getInt("id_pesanan"));
                 String namaMitra = rs.getString("nama_usaha");
-                String status = rs.getString("status");
+                String statusBayar = rs.getString("status_bayar");
+                String statusKirim = rs.getString("status_kirim");
 
-                modelTabel.addRow(new Object[]{id, namaMitra, status});
+                if (statusBayar == null) statusBayar = "Belum Lunas";
+
+                modelTabel.addRow(new Object[]{id, namaMitra, statusBayar, statusKirim});
             }
 
             if (modelTabel.getRowCount() > 0) {
@@ -127,6 +132,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 ArrayList<String> muatanList = new ArrayList<>();
                 boolean headerTerisi = false;
                 String statusKirim = "Diproses";
+                String statusBayar = "Belum Lunas";
 
                 while (rs.next()) {
                     if (!headerTerisi) {
@@ -135,7 +141,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                         statusKirim = rs.getString("status_kirim");
                         String alamat = rs.getString("alamat_kirim");
                         String metode = rs.getString("metode_bayar");
-                        String statusBayar = rs.getString("status_bayar");
+                        statusBayar = rs.getString("status_bayar");
 
                         if (metode == null) metode = "Tunai";
                         if (statusBayar == null) statusBayar = "Belum Lunas";
@@ -147,11 +153,13 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                         String tglStr = (tgl != null) ? new java.text.SimpleDateFormat("dd-MM-yyyy").format(tgl) : "-";
 
                         String warnaBayar = "Lunas".equalsIgnoreCase(statusBayar) ? "#16A34A" : "#D97706";
-                        lblTotalDanBayar.setText("<html>" +
+                        
+                        // Gunakan body dengan line-height dan margin agar spasi lega dan tidak terpotong
+                        lblTotalDanBayar.setText("<html><body style='font-family:Segoe UI; font-size:10.5px; line-height:135%;'>" +
                                                 "Tgl Pesan: <b>" + tglStr + "</b><br>" +
-                                                "Total Tagihan: <b>Rp " + formatRupiah(total) + "</b><br>" +
-                                                "Status Pembayaran: <b style='color:" + warnaBayar + ";'>" +
-                                                statusBayar + " (" + metode + ")</b></html>");
+                                                "Total Tagihan: <b style='color:#0F172A;'>Rp " + formatRupiah(total) + "</b><br>" +
+                                                "Status Bayar: <b style='color:" + warnaBayar + ";'>" +
+                                                statusBayar + " (" + metode + ")</b></body></html>");
 
                         lblTujuanAlamat.setText("Tujuan: " + alamat);
                         headerTerisi = true;
@@ -168,6 +176,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 if (headerTerisi) {
                     lblMuatanSemen.setText(muatanList.isEmpty() ? "Muatan: Semen" : "Muatan: " + String.join(", ", muatanList));
                     cmbUbahStatus.setSelectedItem(statusKirim);
+                    cmbUbahStatusBayar.setSelectedItem(statusBayar);
                 } else {
                     JOptionPane.showMessageDialog(this, "Pesanan dengan ID #" + idPesanan + " tidak ditemukan!", "Nota Tidak Ada", JOptionPane.WARNING_MESSAGE);
                 }
@@ -178,7 +187,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     }
 
     private void initAksiPengiriman() {
-        // Klik baris tabel antrean
         tblPengiriman.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tblPengiriman.getSelectedRow();
@@ -190,7 +198,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             }
         });
 
-        // Tombol Cari Nota
         btnCariNota.addActionListener(evt -> {
             String idStr = txtIdPesanan.getText().trim();
             if (idStr.isEmpty()) {
@@ -216,8 +223,8 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private void rapikanTampilanTambahan() {
         LineBorder borderField = new LineBorder(new Color(226, 232, 240), 1, true);
         EmptyBorder paddingField = new EmptyBorder(0, 10, 0, 10);
-
         txtIdPesanan.setBorder(BorderFactory.createCompoundBorder(borderField, paddingField));
+        panelRingkasan.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
     }
 
     private void pasangLogoSidebar() {
@@ -255,7 +262,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
     }
@@ -267,11 +274,11 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         header.setForeground(new Color(71, 85, 105));
         header.setPreferredSize(new Dimension(header.getWidth(), 38));
 
-        tblPengiriman.getColumnModel().getColumn(0).setPreferredWidth(45);
-        tblPengiriman.getColumnModel().getColumn(1).setPreferredWidth(170);
-        tblPengiriman.getColumnModel().getColumn(2).setPreferredWidth(130);
+        tblPengiriman.getColumnModel().getColumn(0).setPreferredWidth(35);
+        tblPengiriman.getColumnModel().getColumn(1).setPreferredWidth(140);
+        tblPengiriman.getColumnModel().getColumn(2).setPreferredWidth(95);
+        tblPengiriman.getColumnModel().getColumn(3).setPreferredWidth(95);
 
-        // Format kolom ID Pesanan
         tblPengiriman.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -282,7 +289,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             }
         });
 
-        // Format kolom Mitra Toko
         tblPengiriman.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -294,11 +300,58 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             }
         });
 
-        // Format kolom Status Kirim Badge Pill
-        tblPengiriman.getColumnModel().getColumn(2).setCellRenderer(new StatusBadgeRenderer());
+        tblPengiriman.getColumnModel().getColumn(2).setCellRenderer(new StatusBadgeBayarRenderer());
+        tblPengiriman.getColumnModel().getColumn(3).setCellRenderer(new StatusBadgeKirimRenderer());
     }
 
-    private static class StatusBadgeRenderer extends DefaultTableCellRenderer {
+    private static class StatusBadgeBayarRenderer extends DefaultTableCellRenderer {
+        private String textNilai = "";
+        private Color warnaBg = Color.LIGHT_GRAY;
+        private Color warnaTeks = Color.BLACK;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            textNilai = (value != null) ? value.toString().trim() : "";
+
+            if ("Lunas".equalsIgnoreCase(textNilai)) {
+                warnaBg = new Color(220, 252, 231);
+                warnaTeks = new Color(22, 101, 52);
+            } else if ("Refund".equalsIgnoreCase(textNilai)) {
+                warnaBg = new Color(254, 226, 226);
+                warnaTeks = new Color(185, 28, 28);
+            } else {
+                warnaBg = new Color(254, 243, 199);
+                warnaTeks = new Color(180, 83, 9);
+            }
+            return this;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int lebarPill = 82;
+            int tinggiPill = 24;
+            int x = (getWidth() - lebarPill) / 2;
+            int y = (getHeight() - tinggiPill) / 2;
+
+            g2.setColor(warnaBg);
+            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 10, 10);
+
+            g2.setColor(warnaTeks);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            int lebarTeks = g2.getFontMetrics().stringWidth(textNilai);
+            int tinggiFont = g2.getFontMetrics().getAscent();
+            int xTeks = x + (lebarPill - lebarTeks) / 2;
+            int yTeks = y + (tinggiPill + tinggiFont) / 2 - 3;
+            g2.drawString(textNilai, xTeks, yTeks);
+
+            g2.dispose();
+        }
+    }
+
+    private static class StatusBadgeKirimRenderer extends DefaultTableCellRenderer {
         private String textNilai = "";
         private Color warnaBg = Color.LIGHT_GRAY;
         private Color warnaTeks = Color.BLACK;
@@ -339,7 +392,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            int lebarPill = 110;
+            int lebarPill = 82;
             int tinggiPill = 24;
             int x = (getWidth() - lebarPill) / 2;
             int y = (getHeight() - tinggiPill) / 2;
@@ -360,7 +413,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         panelSidebar = new javax.swing.JPanel();
@@ -387,6 +440,8 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         lblTotalDanBayar = new javax.swing.JLabel();
         lblMuatanSemen = new javax.swing.JLabel();
         lblTujuanAlamat = new javax.swing.JLabel();
+        lblUbahStatusBayar = new javax.swing.JLabel();
+        cmbUbahStatusBayar = new javax.swing.JComboBox<>();
         lblUbahStatus = new javax.swing.JLabel();
         cmbUbahStatus = new javax.swing.JComboBox<>();
         btnSimpanStatus = new javax.swing.JButton();
@@ -398,8 +453,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         tblPengiriman = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("SLATE - Pembaruan Status Pengiriman");
-        setPreferredSize(new java.awt.Dimension(1080, 680));
+        setTitle("SLATE - Pembaruan Status Pengiriman & Pembayaran");
         setResizable(false);
 
         panelSidebar.setBackground(new java.awt.Color(22, 27, 34));
@@ -409,15 +463,15 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
         panelBadgeUser.setBackground(new java.awt.Color(33, 39, 50));
 
-        lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblDotStatus.setForeground(new java.awt.Color(34, 196, 95));
         lblDotStatus.setText("●");
 
-        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblRoleText.setForeground(new java.awt.Color(248, 248, 248));
         lblRoleText.setText("Staf Penjualan");
 
-        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10));
+        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblWilayahText.setForeground(new java.awt.Color(134, 148, 160));
         lblWilayahText.setText("Samarinda Ulu");
 
@@ -489,7 +543,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         });
 
         btnNavStatus.setBackground(new java.awt.Color(234, 88, 12));
-        btnNavStatus.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnNavStatus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnNavStatus.setForeground(new java.awt.Color(255, 255, 255));
         btnNavStatus.setText("Pembaruan Status Pengiriman");
         btnNavStatus.setBorderPainted(false);
@@ -499,7 +553,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         btnNavStatus.setMargin(new java.awt.Insets(2, 18, 2, 14));
 
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
-        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
         btnLogout.setText("Logout");
         btnLogout.setBorderPainted(false);
@@ -542,7 +596,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 .addComponent(btnNavPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
                 .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
@@ -551,25 +605,22 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
         panelKonten.setBackground(new java.awt.Color(248, 250, 252));
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24));
+        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
-        lblHeaderTitle.setText("Pembaruan Status Pengiriman");
+        lblHeaderTitle.setText("Pembaruan Status Pengiriman & Pembayaran");
 
         panelCardForm.setBackground(new java.awt.Color(255, 255, 255));
-        panelCardForm.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
-        lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblFormTitle.setForeground(new java.awt.Color(15, 15, 23));
-        lblFormTitle.setText("Form Kontrol Status Logistik");
+        lblFormTitle.setText("Form Kontrol Status Pesanan");
 
-        lblIdPesanan.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblIdPesanan.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblIdPesanan.setForeground(new java.awt.Color(71, 85, 105));
         lblIdPesanan.setText("ID Pesanan");
 
-        txtIdPesanan.setText("");
-
         btnCariNota.setBackground(new java.awt.Color(30, 37, 43));
-        btnCariNota.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnCariNota.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnCariNota.setForeground(new java.awt.Color(255, 255, 255));
         btnCariNota.setText("Cari Nota");
         btnCariNota.setBorderPainted(false);
@@ -577,25 +628,24 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         btnCariNota.setFocusPainted(false);
 
         panelRingkasan.setBackground(new java.awt.Color(248, 250, 252));
-        panelRingkasan.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
-        lblRingkasanHeader.setFont(new java.awt.Font("Segoe UI", 1, 9));
+        lblRingkasanHeader.setFont(new java.awt.Font("Segoe UI", 1, 9)); // NOI18N
         lblRingkasanHeader.setForeground(new java.awt.Color(100, 116, 139));
         lblRingkasanHeader.setText("RINGKASAN NOTA FAKTUR:");
 
-        lblMitraNama.setFont(new java.awt.Font("Segoe UI", 1, 13));
+        lblMitraNama.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblMitraNama.setForeground(new java.awt.Color(15, 15, 23));
         lblMitraNama.setText("- Pilih Nota Pesanan -");
 
-        lblTotalDanBayar.setFont(new java.awt.Font("Segoe UI", 0, 11));
+        lblTotalDanBayar.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
         lblTotalDanBayar.setForeground(new java.awt.Color(71, 85, 105));
         lblTotalDanBayar.setText("<html>Total Tagihan: <b>Rp 0</b><br>Status Pembayaran: -</html>");
 
-        lblMuatanSemen.setFont(new java.awt.Font("Segoe UI", 0, 10));
+        lblMuatanSemen.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblMuatanSemen.setForeground(new java.awt.Color(100, 116, 139));
         lblMuatanSemen.setText("Muatan: -");
 
-        lblTujuanAlamat.setFont(new java.awt.Font("Segoe UI", 0, 10));
+        lblTujuanAlamat.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblTujuanAlamat.setForeground(new java.awt.Color(100, 116, 139));
         lblTujuanAlamat.setText("Tujuan: -");
 
@@ -616,27 +666,33 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelRingkasanLayout.setVerticalGroup(
             panelRingkasanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelRingkasanLayout.createSequentialGroup()
-                .addGap(10, 10, 10)
+                .addGap(8, 8, 8)
                 .addComponent(lblRingkasanHeader)
-                .addGap(3, 3, 3)
+                .addGap(2, 2, 2)
                 .addComponent(lblMitraNama)
-                .addGap(3, 3, 3)
+                .addGap(4, 4, 4)
                 .addComponent(lblTotalDanBayar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(3, 3, 3)
+                .addGap(4, 4, 4)
                 .addComponent(lblMuatanSemen)
-                .addGap(3, 3, 3)
+                .addGap(2, 2, 2)
                 .addComponent(lblTujuanAlamat)
-                .addContainerGap(12, Short.MAX_VALUE))
+                .addContainerGap(8, Short.MAX_VALUE))
         );
 
-        lblUbahStatus.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblUbahStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        lblUbahStatusBayar.setForeground(new java.awt.Color(71, 85, 105));
+        lblUbahStatusBayar.setText("Ubah Status Pembayaran");
+
+        cmbUbahStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+
+        lblUbahStatus.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblUbahStatus.setForeground(new java.awt.Color(71, 85, 105));
         lblUbahStatus.setText("Ubah Status Pengiriman");
 
-        cmbUbahStatus.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        cmbUbahStatus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
 
         btnSimpanStatus.setBackground(new java.awt.Color(234, 88, 12));
-        btnSimpanStatus.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnSimpanStatus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnSimpanStatus.setForeground(new java.awt.Color(255, 255, 255));
         btnSimpanStatus.setText("SIMPAN PERUBAHAN STATUS");
         btnSimpanStatus.setBorderPainted(false);
@@ -649,13 +705,12 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         });
 
         panelBoxInfoBatal.setBackground(new java.awt.Color(240, 246, 250));
-        panelBoxInfoBatal.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
         panelBoxInfoBatal.setLayout(new java.awt.GridBagLayout());
 
-        lblTextInfoBatal.setFont(new java.awt.Font("Segoe UI", 0, 10));
+        lblTextInfoBatal.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblTextInfoBatal.setForeground(new java.awt.Color(71, 98, 121));
         lblTextInfoBatal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblTextInfoBatal.setText("<html><center>Jika dibatalkan, status otomatis menjadi Refund<br>dan kuantitas semen dikembalikan ke stok gudang</center></html>");
+        lblTextInfoBatal.setText("<html><center>Jika dibatalkan (Refund), status otomatis batal<br>dan kuantitas semen dikembalikan ke stok gudang</center></html>");
         panelBoxInfoBatal.add(lblTextInfoBatal, new java.awt.GridBagConstraints());
 
         javax.swing.GroupLayout panelCardFormLayout = new javax.swing.GroupLayout(panelCardForm);
@@ -672,53 +727,60 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                         .addGap(10, 10, 10)
                         .addComponent(btnCariNota, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
                     .addComponent(panelRingkasan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lblUbahStatusBayar)
+                    .addComponent(cmbUbahStatusBayar, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblUbahStatus)
-                    .addComponent(cmbUbahStatus, 0, 318, Short.MAX_VALUE)
-                    .addComponent(btnSimpanStatus, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE)
-                    .addComponent(panelBoxInfoBatal, javax.swing.GroupLayout.DEFAULT_SIZE, 318, Short.MAX_VALUE))
+                    .addComponent(cmbUbahStatus, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnSimpanStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelBoxInfoBatal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(20, Short.MAX_VALUE))
         );
         panelCardFormLayout.setVerticalGroup(
             panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardFormLayout.createSequentialGroup()
-                .addGap(18, 18, 18)
+                .addGap(16, 16, 16)
                 .addComponent(lblFormTitle)
-                .addGap(14, 14, 14)
+                .addGap(12, 12, 12)
                 .addComponent(lblIdPesanan)
-                .addGap(5, 5, 5)
+                .addGap(4, 4, 4)
                 .addGroup(panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtIdPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnCariNota, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(14, 14, 14)
+                    .addComponent(txtIdPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnCariNota, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(10, 10, 10)
                 .addComponent(panelRingkasan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(14, 14, 14)
+                .addGap(10, 10, 10)
+                .addComponent(lblUbahStatusBayar)
+                .addGap(4, 4, 4)
+                .addComponent(cmbUbahStatusBayar, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6)
                 .addComponent(lblUbahStatus)
-                .addGap(5, 5, 5)
-                .addComponent(cmbUbahStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(38, 38, 38)
-                .addComponent(btnSimpanStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(panelBoxInfoBatal, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(4, 4, 4)
+                .addComponent(cmbUbahStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
+                .addComponent(btnSimpanStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(6, 6, 6)
+                .addComponent(panelBoxInfoBatal, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         panelCardTabel.setBackground(new java.awt.Color(255, 255, 255));
-        panelCardTabel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
-        lblTabelTitle.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblTabelTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblTabelTitle.setForeground(new java.awt.Color(15, 15, 23));
         lblTabelTitle.setText("Daftar Antrean & Status Pengiriman");
 
         jScrollPaneTabel.setBorder(null);
 
         tblPengiriman.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
+            new Object [][] {
+
+            },
             new String [] {
-                "ID", "MITRA TOKO", "STATUS KIRIM"
+                "ID", "MITRA TOKO", "STATUS BAYAR", "STATUS KIRIM"
             }
         ) {
             boolean[] canEdit = new boolean [] {
-                false, false, false
+                false, false, false, false
             };
 
             public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -759,7 +821,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             .addGroup(panelKontenLayout.createSequentialGroup()
                 .addGap(35, 35, 35)
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 600, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(panelKontenLayout.createSequentialGroup()
                         .addComponent(panelCardForm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(20, 20, 20)
@@ -782,24 +844,24 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {                                           
+    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {
         new FormMenuStaf().setVisible(true);
         this.dispose();
-    }                                          
+    }
 
-    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {                                                
+    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {
         new FormKelolaPelanggan().setVisible(true);
         this.dispose();
-    }                                               
+    }
 
-    private void btnNavPesananActionPerformed(java.awt.event.ActionEvent evt) {                                              
+    private void btnNavPesananActionPerformed(java.awt.event.ActionEvent evt) {
         new FormPencatatanPesanan().setVisible(true);
         this.dispose();
-    }                                             
+    }
 
-    private void btnSimpanStatusActionPerformed(java.awt.event.ActionEvent evt) {                                                
+    private void btnSimpanStatusActionPerformed(java.awt.event.ActionEvent evt) {
         String idStr = txtIdPesanan.getText().trim();
         if (idStr.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Pilih atau cari ID Pesanan terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
@@ -814,21 +876,30 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             return;
         }
 
-        String statusTerpilih = cmbUbahStatus.getSelectedItem().toString();
+        String statusKirimBaru = cmbUbahStatus.getSelectedItem().toString();
+        String statusBayarBaru = cmbUbahStatusBayar.getSelectedItem().toString();
 
         Connection conn = null;
         try {
             conn = Koneksi.getKoneksi();
             conn.setAutoCommit(false);
 
-            // Cek status pesanan saat ini
-            String statusLama = "";
-            String sqlCek = "SELECT status FROM pesanan WHERE id_pesanan = ?";
+            String statusKirimLama = "";
+            String statusBayarLama = "";
+            double totalTagihan = 0;
+
+            String sqlCek = "SELECT p.status AS status_kirim, p.total_tagihan_rp, pb.status AS status_bayar " +
+                            "FROM pesanan p " +
+                            "LEFT JOIN pembayaran pb ON p.pembayaran_id_pembayaran = pb.id_pembayaran " +
+                            "WHERE p.id_pesanan = ?";
             try (PreparedStatement psCek = conn.prepareStatement(sqlCek)) {
                 psCek.setInt(1, idPesanan);
                 try (ResultSet rs = psCek.executeQuery()) {
                     if (rs.next()) {
-                        statusLama = rs.getString("status");
+                        statusKirimLama = rs.getString("status_kirim");
+                        statusBayarLama = rs.getString("status_bayar");
+                        totalTagihan = rs.getDouble("total_tagihan_rp");
+                        if (statusBayarLama == null) statusBayarLama = "Belum Lunas";
                     } else {
                         JOptionPane.showMessageDialog(this, "ID Pesanan #" + idPesanan + " tidak ditemukan!", "Error", JOptionPane.ERROR_MESSAGE);
                         conn.rollback();
@@ -837,8 +908,8 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 }
             }
 
-            // Jika diubah menjadi Refund dan sebelumnya belum Refund -> Kembalikan stok semen ke tabel semen
-            if ("Refund".equalsIgnoreCase(statusTerpilih) && !"Refund".equalsIgnoreCase(statusLama)) {
+            // Jika diubah menjadi Refund -> Kembalikan stok semen ke tabel semen & tandai pembayaran refund
+            if ("Refund".equalsIgnoreCase(statusKirimBaru) && !"Refund".equalsIgnoreCase(statusKirimLama)) {
                 String sqlAmbilItem = "SELECT semen_id_semen, jumlah_qty FROM detail_pesanan WHERE pesanan_id_pesanan = ?";
                 String sqlRestock = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
 
@@ -857,18 +928,26 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                     }
                 }
 
-                // Update tgl_refund dan status di tabel pembayaran
                 String sqlUpdateBayar = "UPDATE pembayaran SET status = 'Refund', tgl_refund = CURDATE() WHERE pesanan_id_pesanan = ?";
                 try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
                     psBayar.setInt(1, idPesanan);
                     psBayar.executeUpdate();
                 }
+            } else {
+                // Update status pembayaran (Belum Lunas / Lunas)
+                String sqlUpdateBayar = "UPDATE pembayaran SET status = ?, jumlah_bayar_rp = ?, tgl_bayar = CURDATE() WHERE pesanan_id_pesanan = ?";
+                try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
+                    psBayar.setString(1, statusBayarBaru);
+                    psBayar.setDouble(2, "Lunas".equalsIgnoreCase(statusBayarBaru) ? totalTagihan : (totalTagihan / 2));
+                    psBayar.setInt(3, idPesanan);
+                    psBayar.executeUpdate();
+                }
             }
 
             // Update status pesanan di tabel pesanan
-            String sqlUpdate = "UPDATE pesanan SET status = ? WHERE id_pesanan = ?";
-            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdate)) {
-                psUpdate.setString(1, statusTerpilih);
+            String sqlUpdatePesanan = "UPDATE pesanan SET status = ? WHERE id_pesanan = ?";
+            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdatePesanan)) {
+                psUpdate.setString(1, statusKirimBaru);
                 psUpdate.setInt(2, idPesanan);
                 psUpdate.executeUpdate();
             }
@@ -876,7 +955,9 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             conn.commit();
 
             JOptionPane.showMessageDialog(this,
-                    "Status pengiriman pesanan #" + idPesanan + " berhasil diperbarui menjadi: " + statusTerpilih,
+                    "Status pesanan #" + idPesanan + " berhasil diperbarui!\n" +
+                    "• Status Pengiriman: " + statusKirimBaru + "\n" +
+                    "• Status Pembayaran: " + ("Refund".equalsIgnoreCase(statusKirimBaru) ? "Refund" : statusBayarBaru),
                     "Pembaruan Berhasil",
                     JOptionPane.INFORMATION_MESSAGE);
 
@@ -892,9 +973,9 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
             }
         }
-    }                                               
+    }
 
-    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {                                          
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Apakah Anda yakin ingin keluar?",
                 "Konfirmasi Logout",
@@ -904,7 +985,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             new FormLogin().setVisible(true);
             this.dispose();
         }
-    }                                         
+    }
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
@@ -912,7 +993,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCariNota;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnNavMenu;
@@ -921,6 +1002,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private javax.swing.JButton btnNavStatus;
     private javax.swing.JButton btnSimpanStatus;
     private javax.swing.JComboBox<String> cmbUbahStatus;
+    private javax.swing.JComboBox<String> cmbUbahStatusBayar;
     private javax.swing.JScrollPane jScrollPaneTabel;
     private javax.swing.JLabel lblDotStatus;
     private javax.swing.JLabel lblFormTitle;
@@ -936,6 +1018,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private javax.swing.JLabel lblTotalDanBayar;
     private javax.swing.JLabel lblTujuanAlamat;
     private javax.swing.JLabel lblUbahStatus;
+    private javax.swing.JLabel lblUbahStatusBayar;
     private javax.swing.JLabel lblWilayahText;
     private javax.swing.JPanel panelBadgeUser;
     private javax.swing.JPanel panelBoxInfoBatal;
@@ -946,5 +1029,5 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private javax.swing.JPanel panelSidebar;
     private javax.swing.JTable tblPengiriman;
     private javax.swing.JTextField txtIdPesanan;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
 }
