@@ -11,7 +11,7 @@ import java.sql.SQLException;
  * @author LOQ
  */
 public class Koneksi {
-    private static final String URL = "jdbc:mysql://localhost:3306/slate";
+    private static final String URL = "jdbc:mysql://localhost:3306/slate_fix";
     private static final String USER = "root";
     private static final String PASS = "";
     private static Connection conn;

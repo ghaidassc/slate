@@ -3,14 +3,16 @@
  */
 
 package Main;
-import Controller.Controller;
-/**
- *
- * @author LOQ
- */
+
+import view.FormLogin;
+
 public class Slate {
     public static void main(String[] args) {
-        Controller app = new Controller();
-        app.run();
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                new FormLogin().setVisible(true);
+            }
+        });
     }
 }
