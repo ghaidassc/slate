@@ -14,6 +14,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -35,10 +36,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
 
     public FormMenuStaf() {
         initComponents();
-        
-        // Kunci ukuran form agar tidak collapse saat pack()
-        this.setSize(1080, 680);
-        this.setLocationRelativeTo(null);
         
         pasangLogoSidebar();
         desainTabelDanBadgeWarna();
@@ -155,16 +152,14 @@ public class FormMenuStaf extends javax.swing.JFrame {
     private void pasangLogoSidebar() {
         try {
             BufferedImage imgAsli = null;
-
-            String[] daftarJalur = {
+            String[] jalur = {
                 "src/main/java/view/logo_slate.png.jpg",
                 "src/main/java/view/logo_slate.png",
-                "src/main/java/view/logonew.jpg",
-                "D:/Semester_3/PA CAPSTONE/Apaan/src/main/java/view/logo_slate.png.jpg"
+                "src/main/java/view/logonew.jpg"
             };
 
-            for (String jalur : daftarJalur) {
-                File f = new File(jalur);
+            for (String j : jalur) {
+                File f = new File(j);
                 if (f.exists()) {
                     imgAsli = ImageIO.read(f);
                     break;
@@ -189,7 +184,7 @@ public class FormMenuStaf extends javax.swing.JFrame {
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
     }

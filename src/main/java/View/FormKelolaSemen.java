@@ -147,8 +147,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             String[] jalur = {
                 "src/main/java/view/logo_slate.png.jpg",
                 "src/main/java/view/logo_slate.png",
-                "src/main/java/view/logonew.jpg",
-                "D:/Semester_3/PA CAPSTONE/Apaan/src/main/java/view/logo_slate.png.jpg"
+                "src/main/java/view/logonew.jpg"
             };
 
             for (String j : jalur) {

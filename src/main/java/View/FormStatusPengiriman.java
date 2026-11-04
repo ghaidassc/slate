@@ -14,6 +14,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -109,69 +110,63 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private void muatDetailPesanan(int idPesanan) {
         String sql = "SELECT p.id_pesanan, p.tgl_pesanan, p.total_tagihan_rp, p.status AS status_kirim, " +
                      "pl.nama_usaha, pl.alamat_kirim, " +
-                     "b.metode_bayar, b.status AS status_bayar " +
+                     "b.metode_bayar, b.status AS status_bayar, " +
+                     "dp.jumlah_qty, s.nama_semen, s.satuan " +
                      "FROM pesanan p " +
                      "JOIN pelanggan pl ON p.pelanggan_id_pelanggan = pl.id_pelanggan " +
                      "LEFT JOIN pembayaran b ON p.pembayaran_id_pembayaran = b.id_pembayaran " +
+                     "LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.pesanan_id_pesanan " +
+                     "LEFT JOIN semen s ON dp.semen_id_semen = s.id_semen " +
                      "WHERE p.id_pesanan = ?";
-
-        String sqlDetail = "SELECT dp.jumlah_qty, s.nama_semen, s.satuan " +
-                           "FROM detail_pesanan dp " +
-                           "JOIN semen s ON dp.semen_id_semen = s.id_semen " +
-                           "WHERE dp.pesanan_id_pesanan = ?";
 
         try (Connection conn = Koneksi.getKoneksi();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, idPesanan);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    String namaMitra = rs.getString("nama_usaha");
-                    double total = rs.getDouble("total_tagihan_rp");
-                    String statusKirim = rs.getString("status_kirim");
-                    String alamat = rs.getString("alamat_kirim");
-                    String metode = rs.getString("metode_bayar");
-                    String statusBayar = rs.getString("status_bayar");
+                ArrayList<String> muatanList = new ArrayList<>();
+                boolean headerTerisi = false;
+                String statusKirim = "Diproses";
 
-                    if (metode == null) metode = "Tunai";
-                    if (statusBayar == null) statusBayar = "Belum Lunas";
-                    if (alamat == null || alamat.trim().isEmpty()) alamat = "Samarinda";
+                while (rs.next()) {
+                    if (!headerTerisi) {
+                        String namaMitra = rs.getString("nama_usaha");
+                        double total = rs.getDouble("total_tagihan_rp");
+                        statusKirim = rs.getString("status_kirim");
+                        String alamat = rs.getString("alamat_kirim");
+                        String metode = rs.getString("metode_bayar");
+                        String statusBayar = rs.getString("status_bayar");
 
-                    lblMitraNama.setText(namaMitra);
+                        if (metode == null) metode = "Tunai";
+                        if (statusBayar == null) statusBayar = "Belum Lunas";
+                        if (alamat == null || alamat.trim().isEmpty()) alamat = "Samarinda";
 
-                    // Tampilkan tanggal dari database
-                    java.sql.Date tgl = rs.getDate("tgl_pesanan");
-                    String tglStr = (tgl != null) ? new java.text.SimpleDateFormat("dd-MM-yyyy").format(tgl) : "-";
+                        lblMitraNama.setText(namaMitra);
 
-                    String warnaBayar = "Lunas".equalsIgnoreCase(statusBayar) ? "#16A34A" : "#D97706";
-                    lblTotalDanBayar.setText("<html>" +
-                                            "Tgl Pesan: <b>" + tglStr + "</b><br>" +
-                                            "Total Tagihan: <b>Rp " + formatRupiah(total) + "</b><br>" +
-                                            "Status Pembayaran: <b style='color:" + warnaBayar + ";'>" +
-                                            statusBayar + " (" + metode + ")</b></html>");
+                        java.sql.Date tgl = rs.getDate("tgl_pesanan");
+                        String tglStr = (tgl != null) ? new java.text.SimpleDateFormat("dd-MM-yyyy").format(tgl) : "-";
 
-                    lblTujuanAlamat.setText("Tujuan: " + alamat);
+                        String warnaBayar = "Lunas".equalsIgnoreCase(statusBayar) ? "#16A34A" : "#D97706";
+                        lblTotalDanBayar.setText("<html>" +
+                                                "Tgl Pesan: <b>" + tglStr + "</b><br>" +
+                                                "Total Tagihan: <b>Rp " + formatRupiah(total) + "</b><br>" +
+                                                "Status Pembayaran: <b style='color:" + warnaBayar + ";'>" +
+                                                statusBayar + " (" + metode + ")</b></html>");
 
-                    // Muatan semen
-                    ArrayList<String> muatanList = new ArrayList<>();
-                    try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail)) {
-                        psDetail.setInt(1, idPesanan);
-                        try (ResultSet rsDetail = psDetail.executeQuery()) {
-                            while (rsDetail.next()) {
-                                int qty = rsDetail.getInt("jumlah_qty");
-                                String namaSemen = rsDetail.getString("nama_semen");
-                                String satuan = rsDetail.getString("satuan");
-                                muatanList.add(qty + " " + satuan + " (" + namaSemen + ")");
-                            }
-                        }
+                        lblTujuanAlamat.setText("Tujuan: " + alamat);
+                        headerTerisi = true;
                     }
 
-                    if (!muatanList.isEmpty()) {
-                        lblMuatanSemen.setText("Muatan: " + String.join(", ", muatanList));
-                    } else {
-                        lblMuatanSemen.setText("Muatan: Semen");
+                    int qty = rs.getInt("jumlah_qty");
+                    String namaSemen = rs.getString("nama_semen");
+                    String satuan = rs.getString("satuan");
+                    if (namaSemen != null) {
+                        muatanList.add(qty + " " + satuan + " (" + namaSemen + ")");
                     }
+                }
 
+                if (headerTerisi) {
+                    lblMuatanSemen.setText(muatanList.isEmpty() ? "Muatan: Semen" : "Muatan: " + String.join(", ", muatanList));
                     cmbUbahStatus.setSelectedItem(statusKirim);
                 } else {
                     JOptionPane.showMessageDialog(this, "Pesanan dengan ID #" + idPesanan + " tidak ditemukan!", "Nota Tidak Ada", JOptionPane.WARNING_MESSAGE);
@@ -231,8 +226,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             String[] jalur = {
                 "src/main/java/view/logo_slate.png.jpg",
                 "src/main/java/view/logo_slate.png",
-                "src/main/java/view/logonew.jpg",
-                "D:/Semester_3/PA CAPSTONE/Apaan/src/main/java/view/logo_slate.png.jpg"
+                "src/main/java/view/logonew.jpg"
             };
 
             for (String j : jalur) {
@@ -261,7 +255,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
     }

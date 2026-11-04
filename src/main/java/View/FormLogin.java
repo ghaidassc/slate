@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import javax.imageio.ImageIO;
@@ -24,11 +25,10 @@ public class FormLogin extends javax.swing.JFrame {
     private void pasangLogo() {
         try {
             BufferedImage imgAsli = null;
-
             String[] daftarJalur = {
                 "src/main/java/view/logo_slate.png.jpg",
                 "src/main/java/view/logo_slate.png",
-                "D:/Semester_3/PA CAPSTONE/Apaan/src/main/java/view/logo_slate.png.jpg"
+                "src/main/java/view/logonew.jpg"
             };
 
             for (String jalur : daftarJalur) {
@@ -41,52 +41,32 @@ public class FormLogin extends javax.swing.JFrame {
 
             if (imgAsli == null) {
                 InputStream stream = getClass().getResourceAsStream("/view/logo_slate.png.jpg");
-                if (stream == null) {
-                    stream = getClass().getResourceAsStream("/view/logo_slate.png");
-                }
-                if (stream != null) {
-                    imgAsli = ImageIO.read(stream);
-                }
+                if (stream == null) stream = getClass().getResourceAsStream("/view/logo_slate.png");
+                if (stream == null) stream = getClass().getResourceAsStream("/view/logonew.jpg");
+                if (stream != null) imgAsli = ImageIO.read(stream);
             }
 
             if (imgAsli != null) {
-                Color targetBg = panelKiri.getBackground();
-                int w = imgAsli.getWidth();
-                int h = imgAsli.getHeight();
-                BufferedImage imgTransparan = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-
+                // 1. Ambil warna background asli dari pojok gambar logo
                 int sampleRgb = imgAsli.getRGB(0, 0);
-                int rBase = (sampleRgb >> 16) & 0xFF;
-                int gBase = (sampleRgb >> 8) & 0xFF;
-                int bBase = sampleRgb & 0xFF;
+                Color warnaBgLogo = new Color((sampleRgb >> 16) & 0xFF, (sampleRgb >> 8) & 0xFF, sampleRgb & 0xFF);
+                
+                // 2. Samakan warna panelKiri agar menyatu sempurna tanpa garis kotak
+                panelKiri.setBackground(warnaBgLogo);
 
-                for (int y = 0; y < h; y++) {
-                    for (int x = 0; x < w; x++) {
-                        int rgb = imgAsli.getRGB(x, y);
-                        int r = (rgb >> 16) & 0xFF;
-                        int g = (rgb >> 8) & 0xFF;
-                        int b = rgb & 0xFF;
-
-                        int diff = Math.abs(r - rBase) + Math.abs(g - gBase) + Math.abs(b - bBase);
-                        if (diff < 35) {
-                            imgTransparan.setRGB(x, y, targetBg.getRGB());
-                        } else {
-                            imgTransparan.setRGB(x, y, rgb);
-                        }
-                    }
-                }
-
-                Image imgResized = imgTransparan.getScaledInstance(230, 230, Image.SCALE_SMOOTH);
+                Image imgResized = imgAsli.getScaledInstance(230, 230, Image.SCALE_SMOOTH);
                 lblLogo.setIcon(new ImageIcon(imgResized));
                 lblLogo.setText("");
+            } else {
+                lblLogo.setText("<html><center><span style='color:#FFFFFF; font-size:32px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            lblLogo.setText("<html><center><h1 style='color:#FFFFFF;'>SLATE</h1></center></html>");
         }
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         panelKiri = new javax.swing.JPanel();
@@ -117,32 +97,32 @@ public class FormLogin extends javax.swing.JFrame {
 
         panelKanan.setBackground(new java.awt.Color(255, 255, 255));
 
-        lblTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
+        lblTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         lblTitle.setForeground(new java.awt.Color(15, 23, 42));
         lblTitle.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
         lblTitle.setText("LOGIN");
 
-        lblUsername.setFont(new java.awt.Font("Segoe UI", 1, 12)); 
+        lblUsername.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblUsername.setForeground(new java.awt.Color(71, 85, 105));
         lblUsername.setText("Username");
 
-        txtUsername.setFont(new java.awt.Font("Segoe UI", 0, 13)); 
+        txtUsername.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
 
-        lblPassword.setFont(new java.awt.Font("Segoe UI", 1, 12)); 
+        lblPassword.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblPassword.setForeground(new java.awt.Color(71, 85, 105));
         lblPassword.setText("Password");
 
-        txtPassword.setFont(new java.awt.Font("Segoe UI", 0, 13)); 
+        txtPassword.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
 
-        lblRole.setFont(new java.awt.Font("Segoe UI", 1, 12)); 
+        lblRole.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblRole.setForeground(new java.awt.Color(71, 85, 105));
         lblRole.setText("Hak Akses (Role)");
 
-        cmbRole.setFont(new java.awt.Font("Segoe UI", 0, 13)); 
+        cmbRole.setFont(new java.awt.Font("Segoe UI", 0, 13)); // NOI18N
         cmbRole.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Staf Penjualan", "Admin Gudang" }));
 
         btnLogin.setBackground(new java.awt.Color(234, 88, 12));
-        btnLogin.setFont(new java.awt.Font("Segoe UI", 1, 13)); 
+        btnLogin.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         btnLogin.setForeground(new java.awt.Color(255, 255, 255));
         btnLogin.setText("LOGIN");
         btnLogin.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -196,9 +176,9 @@ public class FormLogin extends javax.swing.JFrame {
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         String username = txtUsername.getText().trim();
         String password = new String(txtPassword.getPassword()).trim();
         String rolePilihan = cmbRole.getSelectedItem().toString();
@@ -218,7 +198,7 @@ public class FormLogin extends javax.swing.JFrame {
             if (user != null) {
                 SesiPengguna.setPengguna(user);
 
-                // 1. Jika akun yang login adalah Staf Penjualan
+                // 1. Akun Staf Penjualan
                 if ("staf_penjualan".equalsIgnoreCase(user.getRole())) {
                     if (!rolePilihan.equalsIgnoreCase("Staf Penjualan")) {
                         JOptionPane.showMessageDialog(this,
@@ -236,7 +216,7 @@ public class FormLogin extends javax.swing.JFrame {
                     new FormMenuStaf().setVisible(true);
                     this.dispose();
 
-                // 2. Jika akun yang login adalah Admin Gudang -> Masuk ke Menu Admin Gudang
+                // 2. Akun Admin Gudang
                 } else if ("admin_gudang".equalsIgnoreCase(user.getRole())) {
                     if (!rolePilihan.equalsIgnoreCase("Admin Gudang")) {
                         JOptionPane.showMessageDialog(this,
@@ -251,7 +231,6 @@ public class FormLogin extends javax.swing.JFrame {
                             "Sukses",
                             JOptionPane.INFORMATION_MESSAGE);
 
-                    // Pindah langsung ke form menu admin gudang
                     new FormMenuAdminGudang().setVisible(true);
                     this.dispose();
 
@@ -277,9 +256,15 @@ public class FormLogin extends javax.swing.JFrame {
                     "Koneksi Database Error",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }//GEN-LAST:event_btnLoginActionPerformed
+
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(() -> {
+            new FormLogin().setVisible(true);
+        });
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogin;
     private javax.swing.JComboBox<String> cmbRole;
     private javax.swing.JLabel lblLogo;
@@ -291,5 +276,5 @@ public class FormLogin extends javax.swing.JFrame {
     private javax.swing.JPanel panelKiri;
     private javax.swing.JPasswordField txtPassword;
     private javax.swing.JTextField txtUsername;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
 }

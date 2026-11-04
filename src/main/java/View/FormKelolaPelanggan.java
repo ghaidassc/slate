@@ -84,37 +84,22 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
     private void pasangLogoSidebar() {
         try {
-            BufferedImage imgAsli = null;
-            String[] jalur = {
-                "src/main/java/view/logo_slate.png.jpg",
-                "src/main/java/view/logo_slate.png",
-                "src/main/java/view/logonew.jpg",
-                "D:/Semester_3/PA CAPSTONE/Apaan/src/main/java/view/logo_slate.png.jpg"
-            };
+            java.net.URL logoUrl = getClass().getResource("/view/logo_slate.png.jpg");
+            if (logoUrl == null) {
+                logoUrl = getClass().getResource("/view/logo_slate.png");
+            }
 
-            for (String j : jalur) {
-                File f = new File(j);
-                if (f.exists()) {
-                    imgAsli = ImageIO.read(f);
-                    break;
+            if (logoUrl != null) {
+                BufferedImage imgAsli = ImageIO.read(logoUrl);
+                if (imgAsli != null) {
+                    int rgbPojok = imgAsli.getRGB(0, 0);
+                    Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
+                    panelSidebar.setBackground(warnaAsliLogo);
+
+                    Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
+                    lblLogoSidebar.setIcon(new ImageIcon(imgResized));
+                    lblLogoSidebar.setText("");
                 }
-            }
-
-            if (imgAsli == null) {
-                InputStream stream = getClass().getResourceAsStream("/view/logo_slate.png.jpg");
-                if (stream == null) stream = getClass().getResourceAsStream("/view/logo_slate.png");
-                if (stream == null) stream = getClass().getResourceAsStream("/view/logonew.jpg");
-                if (stream != null) imgAsli = ImageIO.read(stream);
-            }
-
-            if (imgAsli != null) {
-                int rgbPojok = imgAsli.getRGB(0, 0);
-                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                panelSidebar.setBackground(warnaAsliLogo);
-
-                Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
-                lblLogoSidebar.setIcon(new ImageIcon(imgResized));
-                lblLogoSidebar.setText("");
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
