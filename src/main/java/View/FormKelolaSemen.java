@@ -75,23 +75,15 @@ public class FormKelolaSemen extends javax.swing.JFrame {
     }
 
     private void tampilkanSesiPengguna() {
-        try {
-            Pengguna user = SesiPengguna.getPengguna();
-            if (user != null) {
-                lblRoleText.setText(user.getNamaLengkap());
-
-                String sqlShift = "SELECT shift FROM admin_gudang WHERE id_pengguna = ?";
-                try (Connection conn = Koneksi.getKoneksi();
-                     PreparedStatement ps = conn.prepareStatement(sqlShift)) {
-                    ps.setInt(1, user.getIdPengguna());
-                    try (ResultSet rs = ps.executeQuery()) {
-                        String shift = rs.next() ? rs.getString("shift") : "Pagi";
-                        lblShiftText.setText("Shift Kerja: " + shift);
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-    }
+    try {
+        Pengguna user = SesiPengguna.getPengguna();
+        if (user instanceof Model.AdminGudang) {
+            Model.AdminGudang admin = (Model.AdminGudang) user;
+            lblRoleText.setText(admin.getNamaLengkap());
+            lblShiftText.setText("Shift Kerja: " + admin.getShift());
+        }
+    } catch (Exception ignored) {}
+}
 
     private void loadTabelKatalogMaster() {
         String[] kolom = {"ID", "NAMA SEMEN", "HARGA JUAL", "STOK"};

@@ -8,8 +8,6 @@ import view.FormLogin;
 
 public class Slate {
     public static void main(String[] args) {
-        java.awt.EventQueue.invokeLater(() -> {
-            new FormLogin().setVisible(true);
-        });
+        new FormLogin().setVisible(true);
     }
 }

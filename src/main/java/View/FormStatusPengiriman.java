@@ -1,6 +1,5 @@
 package view;
 
-import Config.Koneksi;
 import Model.Pengguna;
 import Model.StafPenjualan;
 import Util.SesiPengguna;
@@ -15,13 +14,9 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -37,6 +32,7 @@ import javax.swing.table.JTableHeader;
 public class FormStatusPengiriman extends javax.swing.JFrame {
 
     private DefaultTableModel modelTabel;
+    private final Service.PesananService pesananService = new Service.PesananService();
 
     public FormStatusPengiriman() {
         initComponents();
@@ -45,13 +41,9 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         rapikanTampilanTambahan();
         pasangLogoSidebar();
 
-        // 1. Inisialisasi opsi ComboBox langsung dari kode (Aman dari bug parser NetBeans)
+        // Inisialisasi opsi ComboBox
         cmbUbahStatusBayar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {
             "Belum Lunas", "Lunas"
-        }));
-
-        cmbUbahStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {
-            "Diproses", "Dikirim", "Diterima", "Refund"
         }));
 
         desainTabelDanBadge();
@@ -80,25 +72,15 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
     private void loadDataTabelPengiriman() {
         modelTabel.setRowCount(0);
-        String sql = "SELECT p.id_pesanan, pl.nama_usaha, pb.status AS status_bayar, p.status AS status_kirim " +
-                     "FROM pesanan p " +
-                     "JOIN pelanggan pl ON p.pelanggan_id_pelanggan = pl.id_pelanggan " +
-                     "LEFT JOIN pembayaran pb ON p.pembayaran_id_pembayaran = pb.id_pembayaran " +
-                     "ORDER BY p.id_pesanan ASC";
-
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                String id = String.valueOf(rs.getInt("id_pesanan"));
-                String namaMitra = rs.getString("nama_usaha");
-                String statusBayar = rs.getString("status_bayar");
-                String statusKirim = rs.getString("status_kirim");
-
-                if (statusBayar == null) statusBayar = "Belum Lunas";
-
-                modelTabel.addRow(new Object[]{id, namaMitra, statusBayar, statusKirim});
+        try {
+            java.util.List<Object[]> antrean = pesananService.getAntreanPengiriman();
+            for (Object[] baris : antrean) {
+                // Konversi tampilan jika di database masih tertulis 'Refund' agar seragam jadi 'Dibatalkan'
+                if (baris.length >= 4) {
+                    if ("Refund".equalsIgnoreCase(String.valueOf(baris[2]))) baris[2] = "Dibatalkan";
+                    if ("Refund".equalsIgnoreCase(String.valueOf(baris[3]))) baris[3] = "Dibatalkan";
+                }
+                modelTabel.addRow(baris);
             }
 
             if (modelTabel.getRowCount() > 0) {
@@ -113,73 +95,72 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     }
 
     private void muatDetailPesanan(int idPesanan) {
-        String sql = "SELECT p.id_pesanan, p.tgl_pesanan, p.total_tagihan_rp, p.status AS status_kirim, " +
-                     "pl.nama_usaha, pl.alamat_kirim, " +
-                     "b.metode_bayar, b.status AS status_bayar, " +
-                     "dp.jumlah_qty, s.nama_semen, s.satuan " +
-                     "FROM pesanan p " +
-                     "JOIN pelanggan pl ON p.pelanggan_id_pelanggan = pl.id_pelanggan " +
-                     "LEFT JOIN pembayaran b ON p.pembayaran_id_pembayaran = b.id_pembayaran " +
-                     "LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.pesanan_id_pesanan " +
-                     "LEFT JOIN semen s ON dp.semen_id_semen = s.id_semen " +
-                     "WHERE p.id_pesanan = ?";
+        try {
+            Model.DetailNota nota = pesananService.getDetailNota(idPesanan);
+            if (nota != null) {
+                lblMitraNama.setText(nota.getNamaUsaha());
 
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                java.sql.Date tgl = nota.getTglPesanan();
+                String tglStr = (tgl != null) ? new java.text.SimpleDateFormat("dd-MM-yyyy").format(tgl) : "-";
+                
+                String statusBayar = "Refund".equalsIgnoreCase(nota.getStatusBayar()) ? "Dibatalkan" : nota.getStatusBayar();
+                String statusKirim = "Refund".equalsIgnoreCase(nota.getStatusKirim()) ? "Dibatalkan" : nota.getStatusKirim();
 
-            ps.setInt(1, idPesanan);
-            try (ResultSet rs = ps.executeQuery()) {
-                ArrayList<String> muatanList = new ArrayList<>();
-                boolean headerTerisi = false;
-                String statusKirim = "Diproses";
-                String statusBayar = "Belum Lunas";
-
-                while (rs.next()) {
-                    if (!headerTerisi) {
-                        String namaMitra = rs.getString("nama_usaha");
-                        double total = rs.getDouble("total_tagihan_rp");
-                        statusKirim = rs.getString("status_kirim");
-                        String alamat = rs.getString("alamat_kirim");
-                        String metode = rs.getString("metode_bayar");
-                        statusBayar = rs.getString("status_bayar");
-
-                        if (metode == null) metode = "Tunai";
-                        if (statusBayar == null) statusBayar = "Belum Lunas";
-                        if (alamat == null || alamat.trim().isEmpty()) alamat = "Samarinda";
-
-                        lblMitraNama.setText(namaMitra);
-
-                        java.sql.Date tgl = rs.getDate("tgl_pesanan");
-                        String tglStr = (tgl != null) ? new java.text.SimpleDateFormat("dd-MM-yyyy").format(tgl) : "-";
-
-                        String warnaBayar = "Lunas".equalsIgnoreCase(statusBayar) ? "#16A34A" : "#D97706";
-                        
-                        // Gunakan body dengan line-height dan margin agar spasi lega dan tidak terpotong
-                        lblTotalDanBayar.setText("<html><body style='font-family:Segoe UI; font-size:10.5px; line-height:135%;'>" +
-                                                "Tgl Pesan: <b>" + tglStr + "</b><br>" +
-                                                "Total Tagihan: <b style='color:#0F172A;'>Rp " + formatRupiah(total) + "</b><br>" +
-                                                "Status Bayar: <b style='color:" + warnaBayar + ";'>" +
-                                                statusBayar + " (" + metode + ")</b></body></html>");
-
-                        lblTujuanAlamat.setText("Tujuan: " + alamat);
-                        headerTerisi = true;
-                    }
-
-                    int qty = rs.getInt("jumlah_qty");
-                    String namaSemen = rs.getString("nama_semen");
-                    String satuan = rs.getString("satuan");
-                    if (namaSemen != null) {
-                        muatanList.add(qty + " " + satuan + " (" + namaSemen + ")");
-                    }
-                }
-
-                if (headerTerisi) {
-                    lblMuatanSemen.setText(muatanList.isEmpty() ? "Muatan: Semen" : "Muatan: " + String.join(", ", muatanList));
-                    cmbUbahStatus.setSelectedItem(statusKirim);
-                    cmbUbahStatusBayar.setSelectedItem(statusBayar);
+                String warnaBayar;
+                if ("Lunas".equalsIgnoreCase(statusBayar)) {
+                    warnaBayar = "#16A34A";
+                } else if ("Dibatalkan".equalsIgnoreCase(statusBayar)) {
+                    warnaBayar = "#DC2626";
                 } else {
-                    JOptionPane.showMessageDialog(this, "Pesanan dengan ID #" + idPesanan + " tidak ditemukan!", "Nota Tidak Ada", JOptionPane.WARNING_MESSAGE);
+                    warnaBayar = "#D97706";
                 }
+
+                lblTotalDanBayar.setText("<html><body style='font-family:Segoe UI; font-size:10.5px; line-height:135%;'>" +
+                                        "Tgl Pesan: <b>" + tglStr + "</b><br>" +
+                                        "Total Tagihan: <b style='color:#0F172A;'>Rp " + formatRupiah(nota.getTotalTagihan()) + "</b><br>" +
+                                        "Status Bayar: <b style='color:" + warnaBayar + ";'>" +
+                                        statusBayar + " (" + nota.getMetodeBayar() + ")</b></body></html>");
+
+                lblTujuanAlamat.setText("Tujuan: " + nota.getAlamatKirim());
+
+                java.util.List<String> muatan = nota.getDaftarMuatan();
+                lblMuatanSemen.setText(muatan.isEmpty() ? "Muatan: Semen" : "Muatan: " + String.join(", ", muatan));
+
+                cmbUbahStatusBayar.setSelectedItem(statusBayar);
+
+                // ATURAN ALUR STATUS PENGIRIMAN
+                cmbUbahStatus.removeAllItems();
+
+                if ("Dibatalkan".equalsIgnoreCase(statusKirim) || "Diterima".equalsIgnoreCase(statusKirim)) {
+                    // Status FINAL: Kunci form dan tampilkan status finalnya saja
+                    cmbUbahStatus.addItem(statusKirim);
+                    cmbUbahStatus.setSelectedItem(statusKirim);
+                    cmbUbahStatus.setEnabled(false);
+                    cmbUbahStatusBayar.setEnabled(false);
+                    btnSimpanStatus.setEnabled(false);
+                } else if ("Dikirim".equalsIgnoreCase(statusKirim) || "Sedang Dikirim".equalsIgnoreCase(statusKirim)) {
+                    // Jika SUDAH DIKIRIM: tidak bisa balik ke Diproses
+                    cmbUbahStatus.setEnabled(true);
+                    cmbUbahStatusBayar.setEnabled(true);
+                    btnSimpanStatus.setEnabled(true);
+
+                    cmbUbahStatus.addItem("Dikirim");
+                    cmbUbahStatus.addItem("Diterima");
+                    cmbUbahStatus.addItem("Dibatalkan");
+                    cmbUbahStatus.setSelectedItem("Dikirim");
+                } else {
+                    // Status masih DIPROSES
+                    cmbUbahStatus.setEnabled(true);
+                    cmbUbahStatusBayar.setEnabled(true);
+                    btnSimpanStatus.setEnabled(true);
+
+                    cmbUbahStatus.addItem("Diproses");
+                    cmbUbahStatus.addItem("Dikirim");
+                    cmbUbahStatus.addItem("Dibatalkan");
+                    cmbUbahStatus.setSelectedItem("Diproses");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Pesanan dengan ID #" + idPesanan + " tidak ditemukan!", "Nota Tidak Ada", JOptionPane.WARNING_MESSAGE);
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Gagal mengambil data nota: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
@@ -316,7 +297,8 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             if ("Lunas".equalsIgnoreCase(textNilai)) {
                 warnaBg = new Color(220, 252, 231);
                 warnaTeks = new Color(22, 101, 52);
-            } else if ("Refund".equalsIgnoreCase(textNilai)) {
+            } else if ("Dibatalkan".equalsIgnoreCase(textNilai) || "Refund".equalsIgnoreCase(textNilai)) {
+                textNilai = "Dibatalkan";
                 warnaBg = new Color(254, 226, 226);
                 warnaTeks = new Color(185, 28, 28);
             } else {
@@ -367,15 +349,19 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                     break;
                 case "Dikirim":
                 case "Sedang Dikirim":
+                    textNilai = "Dikirim";
                     warnaBg = new Color(254, 243, 199);
                     warnaTeks = new Color(180, 83, 9);
                     break;
                 case "Diterima":
                 case "Selesai Diterima":
+                    textNilai = "Diterima";
                     warnaBg = new Color(220, 252, 231);
                     warnaTeks = new Color(22, 101, 52);
                     break;
+                case "Dibatalkan":
                 case "Refund":
+                    textNilai = "Dibatalkan";
                     warnaBg = new Color(254, 226, 226);
                     warnaTeks = new Color(185, 28, 28);
                     break;
@@ -413,7 +399,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         panelSidebar = new javax.swing.JPanel();
@@ -710,7 +696,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         lblTextInfoBatal.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblTextInfoBatal.setForeground(new java.awt.Color(71, 98, 121));
         lblTextInfoBatal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        lblTextInfoBatal.setText("<html><center>Jika dibatalkan (Refund), status otomatis batal<br>dan kuantitas semen dikembalikan ke stok gudang</center></html>");
+        lblTextInfoBatal.setText("<html><center>Jika dibatalkan, status transaksi otomatis terkunci<br>dan kuantitas sak semen dikembalikan ke stok fisik gudang</center></html>");
         panelBoxInfoBatal.add(lblTextInfoBatal, new java.awt.GridBagConstraints());
 
         javax.swing.GroupLayout panelCardFormLayout = new javax.swing.GroupLayout(panelCardForm);
@@ -844,7 +830,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>//GEN-END:initComponents
+    }// </editor-fold>                        
 
     private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {
         new FormMenuStaf().setVisible(true);
@@ -879,99 +865,94 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         String statusKirimBaru = cmbUbahStatus.getSelectedItem().toString();
         String statusBayarBaru = cmbUbahStatusBayar.getSelectedItem().toString();
 
-        Connection conn = null;
-        try {
-            conn = Koneksi.getKoneksi();
-            conn.setAutoCommit(false);
+        // 1. CEK ATURAN TIDAK BOLEH MUNDUR: Jika status lama sudah 'Dikirim', dilarang balik ke 'Diproses'
+        int barisTabel = tblPengiriman.getSelectedRow();
+        if (barisTabel != -1) {
+            String statusKirimLama = tblPengiriman.getValueAt(barisTabel, 3).toString();
+            if ("Dikirim".equalsIgnoreCase(statusKirimLama) && "Diproses".equalsIgnoreCase(statusKirimBaru)) {
+                JOptionPane.showMessageDialog(this,
+                        "Aturan Alur Distribusi:\nPesanan semen yang SUDAH DIKIRIM tidak dapat dikembalikan ke status 'Diproses'!",
+                        "Aksi Tidak Diizinkan",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
 
-            String statusKirimLama = "";
-            String statusBayarLama = "";
-            double totalTagihan = 0;
+        // 2. VALIDASI PEMBAYARAN: Barang tidak boleh Dikirim atau Diterima jika pembayaran Belum Lunas
+        if (("Dikirim".equalsIgnoreCase(statusKirimBaru) || "Diterima".equalsIgnoreCase(statusKirimBaru)) 
+                && !"Lunas".equalsIgnoreCase(statusBayarBaru)) {
+            JOptionPane.showMessageDialog(this,
+                    "Validasi SOP Gagal!\n" +
+                    "Pesanan semen TIDAK BISA berstatus '" + statusKirimBaru + "' jika pembayaran masih Belum Lunas.\n" +
+                    "Ubah status pembayaran menjadi 'Lunas' terlebih dahulu.",
+                    "Pembayaran Belum Lunas",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
-            String sqlCek = "SELECT p.status AS status_kirim, p.total_tagihan_rp, pb.status AS status_bayar " +
-                            "FROM pesanan p " +
-                            "LEFT JOIN pembayaran pb ON p.pembayaran_id_pembayaran = pb.id_pembayaran " +
-                            "WHERE p.id_pesanan = ?";
-            try (PreparedStatement psCek = conn.prepareStatement(sqlCek)) {
-                psCek.setInt(1, idPesanan);
-                try (ResultSet rs = psCek.executeQuery()) {
-                    if (rs.next()) {
-                        statusKirimLama = rs.getString("status_kirim");
-                        statusBayarLama = rs.getString("status_bayar");
-                        totalTagihan = rs.getDouble("total_tagihan_rp");
-                        if (statusBayarLama == null) statusBayarLama = "Belum Lunas";
-                    } else {
-                        JOptionPane.showMessageDialog(this, "ID Pesanan #" + idPesanan + " tidak ditemukan!", "Error", JOptionPane.ERROR_MESSAGE);
-                        conn.rollback();
-                        return;
-                    }
-                }
+        // 3. LOGIKA PEMBATALAN: Kembalikan stok semen ke gudang dan kunci status transaksi
+        if ("Dibatalkan".equalsIgnoreCase(statusKirimBaru)) {
+            int konfirmasi = JOptionPane.showConfirmDialog(this,
+                    "Apakah Anda yakin ingin membatalkan pesanan semen #" + idPesanan + "?\n" +
+                    "• Stok sak semen akan otomatis dikembalikan ke inventaris fisik gudang.\n" +
+                    "• Status transaksi akan terkunci permanen (Final).",
+                    "Konfirmasi Pembatalan Pesanan",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (konfirmasi != JOptionPane.YES_OPTION) {
+                return;
             }
 
-            // Jika diubah menjadi Refund -> Kembalikan stok semen ke tabel semen & tandai pembayaran refund
-            if ("Refund".equalsIgnoreCase(statusKirimBaru) && !"Refund".equalsIgnoreCase(statusKirimLama)) {
-                String sqlAmbilItem = "SELECT semen_id_semen, jumlah_qty FROM detail_pesanan WHERE pesanan_id_pesanan = ?";
-                String sqlRestock = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
+            try {
+                // Memanggil method pengembalian stok di database
+                boolean suksesBatal = pesananService.prosesRefundPesanan(idPesanan);
+                if (suksesBatal) {
+                    JOptionPane.showMessageDialog(this,
+                            "Pesanan #" + idPesanan + " berhasil DIBATALKAN!\n" +
+                            "Stok semen telah otomatis dikembalikan ke gudang.",
+                            "Pembatalan Sukses",
+                            JOptionPane.INFORMATION_MESSAGE);
 
-                try (PreparedStatement psItem = conn.prepareStatement(sqlAmbilItem);
-                     PreparedStatement psRestock = conn.prepareStatement(sqlRestock)) {
-                    psItem.setInt(1, idPesanan);
-                    try (ResultSet rsItem = psItem.executeQuery()) {
-                        while (rsItem.next()) {
-                            int idSemen = rsItem.getInt("semen_id_semen");
-                            int qty = rsItem.getInt("jumlah_qty");
+                    loadDataTabelPengiriman();
 
-                            psRestock.setInt(1, qty);
-                            psRestock.setInt(2, idSemen);
-                            psRestock.executeUpdate();
-                        }
-                    }
+                    // Kunci kontrol form
+                    cmbUbahStatus.setEnabled(false);
+                    cmbUbahStatusBayar.setEnabled(false);
+                    btnSimpanStatus.setEnabled(false);
+                } else {
+                    JOptionPane.showMessageDialog(this, "Gagal membatalkan atau pesanan sudah dibatalkan sebelumnya.", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Gagal membatalkan pesanan: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
+            }
+            return;
+        }
 
-                String sqlUpdateBayar = "UPDATE pembayaran SET status = 'Refund', tgl_refund = CURDATE() WHERE pesanan_id_pesanan = ?";
-                try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
-                    psBayar.setInt(1, idPesanan);
-                    psBayar.executeUpdate();
+        // 4. PEMBARUAN STATUS BIASA (Diproses, Dikirim, Diterima)
+        try {
+            boolean sukses = pesananService.perbaruiStatusPesananDanBayar(idPesanan, statusKirimBaru, statusBayarBaru);
+            if (sukses) {
+                JOptionPane.showMessageDialog(this,
+                        "Status pesanan #" + idPesanan + " berhasil diperbarui!\n" +
+                        "• Status Pengiriman: " + statusKirimBaru + "\n" +
+                        "• Status Pembayaran: " + statusBayarBaru,
+                        "Pembaruan Berhasil",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                loadDataTabelPengiriman();
+
+                // Kunci kontrol form jika sudah Diterima (Final)
+                if ("Diterima".equalsIgnoreCase(statusKirimBaru)) {
+                    cmbUbahStatus.setEnabled(false);
+                    cmbUbahStatusBayar.setEnabled(false);
+                    btnSimpanStatus.setEnabled(false);
                 }
             } else {
-                // Update status pembayaran (Belum Lunas / Lunas)
-                String sqlUpdateBayar = "UPDATE pembayaran SET status = ?, jumlah_bayar_rp = ?, tgl_bayar = CURDATE() WHERE pesanan_id_pesanan = ?";
-                try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
-                    psBayar.setString(1, statusBayarBaru);
-                    psBayar.setDouble(2, "Lunas".equalsIgnoreCase(statusBayarBaru) ? totalTagihan : (totalTagihan / 2));
-                    psBayar.setInt(3, idPesanan);
-                    psBayar.executeUpdate();
-                }
+                JOptionPane.showMessageDialog(this, "ID Pesanan #" + idPesanan + " tidak ditemukan!", "Error", JOptionPane.ERROR_MESSAGE);
             }
-
-            // Update status pesanan di tabel pesanan
-            String sqlUpdatePesanan = "UPDATE pesanan SET status = ? WHERE id_pesanan = ?";
-            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdatePesanan)) {
-                psUpdate.setString(1, statusKirimBaru);
-                psUpdate.setInt(2, idPesanan);
-                psUpdate.executeUpdate();
-            }
-
-            conn.commit();
-
-            JOptionPane.showMessageDialog(this,
-                    "Status pesanan #" + idPesanan + " berhasil diperbarui!\n" +
-                    "• Status Pengiriman: " + statusKirimBaru + "\n" +
-                    "• Status Pembayaran: " + ("Refund".equalsIgnoreCase(statusKirimBaru) ? "Refund" : statusBayarBaru),
-                    "Pembaruan Berhasil",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            loadDataTabelPengiriman();
-
         } catch (SQLException ex) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ignored) {}
-            }
             JOptionPane.showMessageDialog(this, "Gagal memperbarui status: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
-            }
         }
     }
 
@@ -993,7 +974,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration - do not modify                     
     private javax.swing.JButton btnCariNota;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnNavMenu;
@@ -1029,5 +1010,5 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private javax.swing.JPanel panelSidebar;
     private javax.swing.JTable tblPengiriman;
     private javax.swing.JTextField txtIdPesanan;
-    // End of variables declaration//GEN-END:variables
+    // End of variables declaration                   
 }

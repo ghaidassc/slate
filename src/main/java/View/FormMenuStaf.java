@@ -1,8 +1,9 @@
 package view;
 
-import Config.Koneksi;
 import Model.Pengguna;
+import Model.Pesanan;
 import Model.StafPenjualan;
+import Service.PesananService;
 import Util.SesiPengguna;
 import java.awt.Color;
 import java.awt.Component;
@@ -14,14 +15,11 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.NumberFormat;
-import java.util.Locale;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -34,132 +32,268 @@ import javax.swing.table.JTableHeader;
 
 public class FormMenuStaf extends javax.swing.JFrame {
 
+    private DefaultTableModel modelTabel;
+    private final PesananService pesananService = new PesananService();
+
     public FormMenuStaf() {
         initComponents();
+        // Berikan lebar yang lega agar border jendela Windows tidak memotong kartu kanan
+        this.setPreferredSize(new Dimension(1140, 700));
+        this.setSize(1140, 700);
+        this.pack();
+        this.setLocationRelativeTo(null);
         
+        rapikanGayaKomponen();
         pasangLogoSidebar();
-        desainTabelDanBadgeWarna();
-        loadDataPesanan();
 
-        // 1. Tampilkan nama staf & wilayah dari sesi login
         try {
             Pengguna currentUser = SesiPengguna.getPengguna();
             if (currentUser instanceof StafPenjualan) {
                 StafPenjualan staf = (StafPenjualan) currentUser;
-                lblNamaStaf.setText(staf.getNamaLengkap());
-                lblWilayah.setText(staf.getWilayahPenjualan());
+                lblRoleText.setText(staf.getNamaLengkap());
+                lblWilayahText.setText(staf.getWilayahPenjualan());
             }
         } catch (Exception ignored) {}
 
-        // 2. Navigasi Sidebar - Kelola Pelanggan
-        btnNavPelanggan.addActionListener(evt -> {
-            new FormKelolaPelanggan().setVisible(true);
-            dispose();
-        });
-
-        // 3. Navigasi Sidebar - Pencatatan Pesanan
-        btnNavPesanan.addActionListener(evt -> {
-            new FormPencatatanPesanan().setVisible(true);
-            dispose();
-        });
-        
-        // 4. Navigasi Sidebar - Pembaruan Status Pengiriman
-        btnNavStatus.addActionListener(evt -> {
-            new FormStatusPengiriman().setVisible(true);
-            dispose();
-        });
-
-        // 5. Kartu Atas 1 - Kelola Pelanggan
-        cardPelanggan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cardPelanggan.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new FormKelolaPelanggan().setVisible(true);
-                dispose();
-            }
-        });
-
-        // 6. Kartu Atas 2 - Pencatatan Pesanan
-        cardPesanan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cardPesanan.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new FormPencatatanPesanan().setVisible(true);
-                dispose();
-            }
-        });
-
-        // 7. Kartu Atas 3 - Pembaruan Status
-        cardStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        cardStatus.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new FormStatusPengiriman().setVisible(true);
-                dispose();
-            }
-        });
+        modelTabel = (DefaultTableModel) tblRiwayat.getModel();
+        desainTabelDanBadge();
+        muatStatistikDashboard();
+        muatTabelRekapPesanan();
     }
 
-    // Memuat data riwayat pesanan dari database MySQL sesuai staf yang login
-    private void loadDataPesanan() {
-        DefaultTableModel model = (DefaultTableModel) tblRekapPesanan.getModel();
-        model.setRowCount(0);
+    private static String formatRupiah(double nominal) {
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols();
+        symbols.setGroupingSeparator('.');
+        symbols.setDecimalSeparator(',');
+        DecimalFormat df = new DecimalFormat("#,###", symbols);
+        return df.format(nominal);
+    }
 
-        Pengguna currentUser = SesiPengguna.getPengguna();
-        if (currentUser == null) return;
+    private void rapikanGayaKomponen() {
+        // Border card dengan aksen warna atas
+        cardPendapatan.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(3, 1, 1, 1, new Color(234, 88, 12)),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        ));
+        cardLaku.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(3, 1, 1, 1, new Color(203, 213, 225)),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        ));
+        cardAktif.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(3, 1, 1, 1, new Color(59, 130, 246)),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)
+        ));
 
-        String sql = "SELECT p.id_pesanan, pl.nama_usaha, p.total_tagihan_rp, pb.status AS status_bayar, p.status AS status_pesanan "
-                   + "FROM pesanan p "
-                   + "JOIN pelanggan pl ON p.pelanggan_id_pelanggan = pl.id_pelanggan "
-                   + "JOIN pembayaran pb ON p.pembayaran_id_pembayaran = pb.id_pembayaran "
-                   + "WHERE p.staf_penjualan_id_pengguna = ? "
-                   + "ORDER BY p.id_pesanan ASC";
+        panelCardTabel.setBorder(BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true));
+    }
 
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    private void muatStatistikDashboard() {
+        try {
+            Object[] stats = pesananService.getStatistikDashboardStaf();
+            double totalPendapatan = (double) stats[0];
+            int totalSelesai = (int) stats[1];
+            String semenLaku = (String) stats[2];
+            int qtyLaku = (int) stats[3];
+            int totalAktif = (int) stats[4];
+            int kirim = (int) stats[5];
+            int menunggu = (int) stats[6];
 
-            ps.setInt(1, currentUser.getIdPengguna());
-            ResultSet rs = ps.executeQuery();
+            lblValPendapatan.setText("Rp " + formatRupiah(totalPendapatan));
+            lblSubPendapatan.setText("↑ " + totalSelesai + " transaksi selesai");
 
-            NumberFormat formatRupiah = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
+            lblValLaku.setText(semenLaku);
+            lblSubLaku.setText("Terjual: " + formatRupiah(qtyLaku) + " Sak");
 
-            while (rs.next()) {
-                int idPesanan = rs.getInt("id_pesanan");
-                String namaUsaha = rs.getString("nama_usaha");
-                double totalTagihan = rs.getDouble("total_tagihan_rp");
-                String statusBayar = rs.getString("status_bayar");
-                String statusPesanan = rs.getString("status_pesanan");
-
-                String totalFormatted = formatRupiah.format(totalTagihan).replace("Rp", "Rp ").replace(",00", "");
-
-                model.addRow(new Object[]{
-                    idPesanan,
-                    namaUsaha,
-                    totalFormatted,
-                    statusBayar,
-                    statusPesanan
-                });
-            }
+            lblValAktif.setText(totalAktif + " Pesanan");
+            lblSubAktif.setText(kirim + " Proses Kirim • " + menunggu + " Menunggu");
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, 
-                "Gagal memuat rekap pesanan: " + ex.getMessage(), 
-                "Error Database", 
-                JOptionPane.ERROR_MESSAGE);
+            lblValPendapatan.setText("Rp 0");
+            lblValLaku.setText("-");
+            lblValAktif.setText("0 Pesanan");
         }
     }
 
-    // Memuat logo SLATE dan menyelaraskan dengan warna sidebar
+    private void muatTabelRekapPesanan() {
+        modelTabel.setRowCount(0);
+        try {
+            List<Pesanan> list = pesananService.getRekapSemuaPesanan();
+            for (Pesanan p : list) {
+                modelTabel.addRow(new Object[]{
+                    String.valueOf(p.getIdPesanan()),
+                    p.getNamaPelanggan(),
+                    "Rp " + formatRupiah(p.getTotalTagihan()),
+                    p.getStatusBayar(),
+                    p.getStatus()
+                });
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Gagal memuat rekap pesanan: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void desainTabelDanBadge() {
+        JTableHeader header = tblRiwayat.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        header.setBackground(new Color(241, 245, 249));
+        header.setForeground(new Color(71, 85, 105));
+        header.setPreferredSize(new Dimension(header.getWidth(), 38));
+        
+        // Memenuhi Catatan Aslab Poin 19: Kunci kolom agar tidak bisa digeser urutannya
+        header.setReorderingAllowed(false);
+
+        tblRiwayat.getColumnModel().getColumn(0).setPreferredWidth(45);
+        tblRiwayat.getColumnModel().getColumn(1).setPreferredWidth(170);
+        tblRiwayat.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tblRiwayat.getColumnModel().getColumn(3).setPreferredWidth(90);
+        tblRiwayat.getColumnModel().getColumn(4).setPreferredWidth(90);
+
+        // Center ID
+        tblRiwayat.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setHorizontalAlignment(SwingConstants.CENTER);
+                setFont(new Font("Segoe UI", Font.BOLD, 12));
+                return c;
+            }
+        });
+
+        // Bold Total Tagihan
+        tblRiwayat.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                setFont(new Font("Segoe UI", Font.BOLD, 12));
+                setForeground(new Color(15, 23, 42));
+                return c;
+            }
+        });
+
+        // Badge Status Bayar & Status Kirim
+        tblRiwayat.getColumnModel().getColumn(3).setCellRenderer(new StatusBadgeBayarRenderer());
+        tblRiwayat.getColumnModel().getColumn(4).setCellRenderer(new StatusBadgeKirimRenderer());
+    }
+
+    private static class StatusBadgeBayarRenderer extends DefaultTableCellRenderer {
+        private String textNilai = "";
+        private Color warnaBg = Color.LIGHT_GRAY;
+        private Color warnaTeks = Color.BLACK;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            textNilai = (value != null) ? value.toString().trim() : "";
+
+            if ("Lunas".equalsIgnoreCase(textNilai)) {
+                warnaBg = new Color(220, 252, 231);
+                warnaTeks = new Color(22, 101, 52);
+            } else if ("Refund".equalsIgnoreCase(textNilai) || "Dibatalkan".equalsIgnoreCase(textNilai)) {
+                warnaBg = new Color(254, 226, 226);
+                warnaTeks = new Color(185, 28, 28);
+            } else {
+                warnaBg = new Color(254, 243, 199);
+                warnaTeks = new Color(180, 83, 9);
+            }
+            return this;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int lebarPill = 76;
+            int tinggiPill = 22;
+            int x = (getWidth() - lebarPill) / 2;
+            int y = (getHeight() - tinggiPill) / 2;
+
+            g2.setColor(warnaBg);
+            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 8, 8);
+
+            g2.setColor(warnaTeks);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            int lebarTeks = g2.getFontMetrics().stringWidth(textNilai);
+            int tinggiFont = g2.getFontMetrics().getAscent();
+            int xTeks = x + (lebarPill - lebarTeks) / 2;
+            int yTeks = y + (tinggiPill + tinggiFont) / 2 - 3;
+            g2.drawString(textNilai, xTeks, yTeks);
+
+            g2.dispose();
+        }
+    }
+
+    private static class StatusBadgeKirimRenderer extends DefaultTableCellRenderer {
+        private String textNilai = "";
+        private Color warnaBg = Color.LIGHT_GRAY;
+        private Color warnaTeks = Color.BLACK;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            textNilai = (value != null) ? value.toString().trim() : "";
+
+            switch (textNilai) {
+                case "Diproses":
+                    warnaBg = new Color(241, 245, 249);
+                    warnaTeks = new Color(71, 85, 105);
+                    break;
+                case "Dikirim":
+                case "Sedang Dikirim":
+                    warnaBg = new Color(254, 243, 199);
+                    warnaTeks = new Color(180, 83, 9);
+                    break;
+                case "Diterima":
+                case "Selesai Diterima":
+                    warnaBg = new Color(224, 242, 254);
+                    warnaTeks = new Color(3, 105, 161);
+                    break;
+                case "Refund":
+                case "Dibatalkan":
+                    warnaBg = new Color(254, 226, 226);
+                    warnaTeks = new Color(185, 28, 28);
+                    break;
+                default:
+                    warnaBg = new Color(241, 245, 249);
+                    warnaTeks = new Color(71, 85, 105);
+                    break;
+            }
+            return this;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int lebarPill = 76;
+            int tinggiPill = 22;
+            int x = (getWidth() - lebarPill) / 2;
+            int y = (getHeight() - tinggiPill) / 2;
+
+            g2.setColor(warnaBg);
+            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 8, 8);
+
+            g2.setColor(warnaTeks);
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            int lebarTeks = g2.getFontMetrics().stringWidth(textNilai);
+            int tinggiFont = g2.getFontMetrics().getAscent();
+            int xTeks = x + (lebarPill - lebarTeks) / 2;
+            int yTeks = y + (tinggiPill + tinggiFont) / 2 - 3;
+            g2.drawString(textNilai, xTeks, yTeks);
+
+            g2.dispose();
+        }
+    }
+
     private void pasangLogoSidebar() {
         try {
             BufferedImage imgAsli = null;
-            String[] jalur = {
+            String[] daftarJalur = {
                 "src/main/java/view/logo_slate.png.jpg",
                 "src/main/java/view/logo_slate.png",
                 "src/main/java/view/logonew.jpg"
             };
 
-            for (String j : jalur) {
-                File f = new File(j);
+            for (String jalur : daftarJalur) {
+                File f = new File(jalur);
                 if (f.exists()) {
                     imgAsli = ImageIO.read(f);
                     break;
@@ -184,106 +318,8 @@ public class FormMenuStaf extends javax.swing.JFrame {
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
-        }
-    }
-
-    // Mengatur header tabel dan kapsul status warna
-    private void desainTabelDanBadgeWarna() {
-        JTableHeader header = tblRekapPesanan.getTableHeader();
-        header.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        header.setBackground(new Color(241, 245, 249));
-        header.setForeground(new Color(71, 85, 105));
-        header.setPreferredSize(new Dimension(header.getWidth(), 38));
-
-        // Format kolom ID Pesanan
-        tblRekapPesanan.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setHorizontalAlignment(SwingConstants.LEFT);
-                setFont(new Font("Segoe UI", Font.BOLD, 12));
-                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-                return c;
-            }
-        });
-
-        // Format kolom Total Tagihan tebal
-        tblRekapPesanan.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setFont(new Font("Segoe UI", Font.BOLD, 12));
-                setForeground(new Color(15, 23, 42));
-                return c;
-            }
-        });
-
-        // Kolom Status Bayar & Status Pesanan diberi badge kapsul warna
-        tblRekapPesanan.getColumnModel().getColumn(3).setCellRenderer(new BadgePillRenderer());
-        tblRekapPesanan.getColumnModel().getColumn(4).setCellRenderer(new BadgePillRenderer());
-    }
-
-    // Renderer khusus badge pill warna pastel
-    private static class BadgePillRenderer extends DefaultTableCellRenderer {
-        private String textNilai = "";
-        private Color warnaBg = Color.LIGHT_GRAY;
-        private Color warnaTeks = Color.BLACK;
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            textNilai = (value != null) ? value.toString().trim() : "";
-            
-            switch (textNilai) {
-                case "Lunas":
-                    warnaBg = new Color(220, 252, 231);  // Hijau pastel
-                    warnaTeks = new Color(22, 101, 52);   // Hijau tua
-                    break;
-                case "Belum Lunas":
-                case "Refund":
-                    warnaBg = new Color(254, 226, 226);  // Merah muda pastel
-                    warnaTeks = new Color(153, 27, 27);   // Merah tua
-                    break;
-                case "Diterima":
-                    warnaBg = new Color(224, 242, 254);  // Biru muda pastel
-                    warnaTeks = new Color(7, 89, 133);    // Biru tua
-                    break;
-                case "Dikirim":
-                    warnaBg = new Color(254, 243, 199);  // Kuning pastel
-                    warnaTeks = new Color(146, 64, 14);   // Cokelat/jingga
-                    break;
-                case "Diproses":
-                default:
-                    warnaBg = new Color(241, 245, 249);  // Abu-abu muda
-                    warnaTeks = new Color(71, 85, 105);   // Abu-abu gelap
-                    break;
-            }
-            return this;
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            int lebarPill = 84;
-            int tinggiPill = 24;
-            int x = (getWidth() - lebarPill) / 2;
-            int y = (getHeight() - tinggiPill) / 2;
-
-            g2.setColor(warnaBg);
-            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 12, 12);
-
-            g2.setColor(warnaTeks);
-            g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
-            int lebarTeks = g2.getFontMetrics().stringWidth(textNilai);
-            int tinggiFont = g2.getFontMetrics().getAscent();
-            int xTeks = x + (lebarPill - lebarTeks) / 2;
-            int yTeks = y + (tinggiPill + tinggiFont) / 2 - 3;
-            g2.drawString(textNilai, xTeks, yTeks);
-
-            g2.dispose();
         }
     }
 
@@ -295,68 +331,79 @@ public class FormMenuStaf extends javax.swing.JFrame {
         lblLogoSidebar = new javax.swing.JLabel();
         panelBadgeUser = new javax.swing.JPanel();
         lblDotStatus = new javax.swing.JLabel();
-        lblNamaStaf = new javax.swing.JLabel();
-        lblWilayah = new javax.swing.JLabel();
+        lblRoleText = new javax.swing.JLabel();
+        lblWilayahText = new javax.swing.JLabel();
         btnNavMenu = new javax.swing.JButton();
         btnNavPelanggan = new javax.swing.JButton();
         btnNavPesanan = new javax.swing.JButton();
         btnNavStatus = new javax.swing.JButton();
-        btnLogout = new javax.swing.JButton();
-        panelKonten = new javax.swing.JPanel();
-        lblHeaderTitle = new javax.swing.JLabel();
-        card1 = new javax.swing.JPanel();
-        badgeBox1 = new javax.swing.JPanel();
-        lblAngka1 = new javax.swing.JLabel();
-        cardPelanggan = new javax.swing.JLabel();
-        card2 = new javax.swing.JPanel();
-        badgeBox2 = new javax.swing.JPanel();
-        lblAngka2 = new javax.swing.JLabel();
-        cardPesanan = new javax.swing.JLabel();
-        card3 = new javax.swing.JPanel();
-        badgeBox3 = new javax.swing.JPanel();
-        lblAngka3 = new javax.swing.JLabel();
-        cardStatus = new javax.swing.JLabel();
-        panelTabelContainer = new javax.swing.JPanel();
+        btnKeluar = new javax.swing.JButton();
+        panelUtama = new javax.swing.JPanel();
+        lblJudulMenu = new javax.swing.JLabel();
+        cardPendapatan = new javax.swing.JPanel();
+        lblTitlePendapatan = new javax.swing.JLabel();
+        lblValPendapatan = new javax.swing.JLabel();
+        lblSubPendapatan = new javax.swing.JLabel();
+        cardLaku = new javax.swing.JPanel();
+        lblTitleLaku = new javax.swing.JLabel();
+        lblValLaku = new javax.swing.JLabel();
+        lblSubLaku = new javax.swing.JLabel();
+        cardAktif = new javax.swing.JPanel();
+        lblTitleAktif = new javax.swing.JLabel();
+        lblValAktif = new javax.swing.JLabel();
+        lblSubAktif = new javax.swing.JLabel();
+        panelCardTabel = new javax.swing.JPanel();
         lblTabelTitle = new javax.swing.JLabel();
         jScrollPaneTabel = new javax.swing.JScrollPane();
-        tblRekapPesanan = new javax.swing.JTable();
+        tblRiwayat = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Menu Staf Penjualan");
-        setPreferredSize(new java.awt.Dimension(1080, 680));
         setResizable(false);
 
         panelSidebar.setBackground(new java.awt.Color(22, 27, 34));
         panelSidebar.setPreferredSize(new java.awt.Dimension(240, 680));
-        panelSidebar.setLayout(null);
 
         lblLogoSidebar.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        panelSidebar.add(lblLogoSidebar);
-        lblLogoSidebar.setBounds(20, 20, 200, 70);
 
         panelBadgeUser.setBackground(new java.awt.Color(33, 39, 50));
-        panelBadgeUser.setLayout(null);
 
         lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblDotStatus.setForeground(new java.awt.Color(34, 196, 95));
         lblDotStatus.setText("●");
-        panelBadgeUser.add(lblDotStatus);
-        lblDotStatus.setBounds(14, 8, 15, 20);
 
-        lblNamaStaf.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblNamaStaf.setForeground(new java.awt.Color(248, 248, 248));
-        lblNamaStaf.setText("Staf Penjualan");
-        panelBadgeUser.add(lblNamaStaf);
-        lblNamaStaf.setBounds(32, 7, 150, 18);
+        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
+        lblRoleText.setText("Staf Penjualan");
 
-        lblWilayah.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        lblWilayah.setForeground(new java.awt.Color(134, 148, 160));
-        lblWilayah.setText("Samarinda Ulu");
-        panelBadgeUser.add(lblWilayah);
-        lblWilayah.setBounds(32, 24, 150, 16);
+        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
+        lblWilayahText.setForeground(new java.awt.Color(134, 148, 160));
+        lblWilayahText.setText("Samarinda");
 
-        panelSidebar.add(panelBadgeUser);
-        panelBadgeUser.setBounds(20, 105, 200, 46);
+        javax.swing.GroupLayout panelBadgeUserLayout = new javax.swing.GroupLayout(panelBadgeUser);
+        panelBadgeUser.setLayout(panelBadgeUserLayout);
+        panelBadgeUserLayout.setHorizontalGroup(
+            panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelBadgeUserLayout.createSequentialGroup()
+                .addGap(12, 12, 12)
+                .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
+                .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblRoleText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblWilayahText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(16, Short.MAX_VALUE))
+        );
+        panelBadgeUserLayout.setVerticalGroup(
+            panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelBadgeUserLayout.createSequentialGroup()
+                .addGap(8, 8, 8)
+                .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblDotStatus)
+                    .addComponent(lblRoleText))
+                .addGap(2, 2, 2)
+                .addComponent(lblWilayahText)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
         btnNavMenu.setBackground(new java.awt.Color(234, 88, 12));
         btnNavMenu.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -366,9 +413,7 @@ public class FormMenuStaf extends javax.swing.JFrame {
         btnNavMenu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavMenu.setFocusPainted(false);
         btnNavMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavMenu.setMargin(new java.awt.Insets(2, 18, 2, 14));
-        panelSidebar.add(btnNavMenu);
-        btnNavMenu.setBounds(15, 175, 210, 42);
+        btnNavMenu.setMargin(new java.awt.Insets(2, 16, 2, 14));
 
         btnNavPelanggan.setBackground(new java.awt.Color(22, 27, 34));
         btnNavPelanggan.setForeground(new java.awt.Color(134, 148, 160));
@@ -377,9 +422,12 @@ public class FormMenuStaf extends javax.swing.JFrame {
         btnNavPelanggan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavPelanggan.setFocusPainted(false);
         btnNavPelanggan.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavPelanggan.setMargin(new java.awt.Insets(2, 18, 2, 14));
-        panelSidebar.add(btnNavPelanggan);
-        btnNavPelanggan.setBounds(15, 225, 210, 42);
+        btnNavPelanggan.setMargin(new java.awt.Insets(2, 16, 2, 14));
+        btnNavPelanggan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavPelangganActionPerformed(evt);
+            }
+        });
 
         btnNavPesanan.setBackground(new java.awt.Color(22, 27, 34));
         btnNavPesanan.setForeground(new java.awt.Color(134, 148, 160));
@@ -388,138 +436,207 @@ public class FormMenuStaf extends javax.swing.JFrame {
         btnNavPesanan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavPesanan.setFocusPainted(false);
         btnNavPesanan.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavPesanan.setMargin(new java.awt.Insets(2, 18, 2, 14));
-        panelSidebar.add(btnNavPesanan);
-        btnNavPesanan.setBounds(15, 275, 210, 42);
+        btnNavPesanan.setMargin(new java.awt.Insets(2, 16, 2, 14));
+        btnNavPesanan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavPesananActionPerformed(evt);
+            }
+        });
 
         btnNavStatus.setBackground(new java.awt.Color(22, 27, 34));
         btnNavStatus.setForeground(new java.awt.Color(134, 148, 160));
-        btnNavStatus.setText("Pembaruan Status Pengiriman");
+        btnNavStatus.setText("Pembaruan Status");
         btnNavStatus.setBorderPainted(false);
         btnNavStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavStatus.setFocusPainted(false);
         btnNavStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavStatus.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavStatus.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavStatus.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavStatusActionPerformed(evt);
             }
         });
-        panelSidebar.add(btnNavStatus);
-        btnNavStatus.setBounds(15, 325, 210, 42);
 
-        btnLogout.setBackground(new java.awt.Color(33, 39, 50));
-        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnLogout.setForeground(new java.awt.Color(239, 68, 68));
-        btnLogout.setText("Logout");
-        btnLogout.setBorderPainted(false);
-        btnLogout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btnLogout.setFocusPainted(false);
-        btnLogout.addActionListener(new java.awt.event.ActionListener() {
+        btnKeluar.setBackground(new java.awt.Color(33, 39, 50));
+        btnKeluar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnKeluar.setForeground(new java.awt.Color(239, 68, 68));
+        btnKeluar.setText("KELUAR");
+        btnKeluar.setBorderPainted(false);
+        btnKeluar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnKeluar.setFocusPainted(false);
+        btnKeluar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLogoutActionPerformed(evt);
+                btnKeluarActionPerformed(evt);
             }
         });
-        panelSidebar.add(btnLogout);
-        btnLogout.setBounds(15, 585, 210, 42);
+
+        javax.swing.GroupLayout panelSidebarLayout = new javax.swing.GroupLayout(panelSidebar);
+        panelSidebar.setLayout(panelSidebarLayout);
+        panelSidebarLayout.setHorizontalGroup(
+            panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelSidebarLayout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lblLogoSidebar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelBadgeUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnNavMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnNavPelanggan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnNavPesanan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnNavStatus, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
+                    .addComponent(btnKeluar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
+        );
+        panelSidebarLayout.setVerticalGroup(
+            panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelSidebarLayout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addComponent(lblLogoSidebar, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(panelBadgeUser, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(26, 26, 26)
+                .addComponent(btnNavMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
+                .addComponent(btnNavPelanggan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
+                .addComponent(btnNavPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(8, 8, 8)
+                .addComponent(btnNavStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 234, Short.MAX_VALUE)
+                .addComponent(btnKeluar, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(20, 20, 20))
+        );
 
         getContentPane().add(panelSidebar, java.awt.BorderLayout.WEST);
 
-        panelKonten.setBackground(new java.awt.Color(248, 250, 252));
-        panelKonten.setPreferredSize(new java.awt.Dimension(840, 680));
-        panelKonten.setLayout(null);
+        panelUtama.setBackground(new java.awt.Color(248, 250, 252));
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
-        lblHeaderTitle.setText("Menu Staf Penjualan");
-        panelKonten.add(lblHeaderTitle);
-        lblHeaderTitle.setBounds(35, 25, 400, 35);
+        lblJudulMenu.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
+        lblJudulMenu.setForeground(new java.awt.Color(15, 23, 34));
+        lblJudulMenu.setText("Menu Staf Penjualan");
 
-        card1.setBackground(new java.awt.Color(255, 255, 255));
-        card1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        card1.setLayout(null);
+        cardPendapatan.setBackground(new java.awt.Color(255, 255, 255));
 
-        badgeBox1.setBackground(new java.awt.Color(254, 235, 235));
-        badgeBox1.setLayout(new java.awt.GridBagLayout());
+        lblTitlePendapatan.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
+        lblTitlePendapatan.setForeground(new java.awt.Color(71, 85, 105));
+        lblTitlePendapatan.setText("Total Pendapatan (Bulan Ini)");
 
-        lblAngka1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblAngka1.setForeground(new java.awt.Color(234, 81, 58));
-        lblAngka1.setText("1");
-        badgeBox1.add(lblAngka1, new java.awt.GridBagConstraints());
+        lblValPendapatan.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblValPendapatan.setForeground(new java.awt.Color(15, 23, 34));
+        lblValPendapatan.setText("Rp 0");
 
-        card1.add(badgeBox1);
-        badgeBox1.setBounds(15, 16, 36, 42);
+        lblSubPendapatan.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
+        lblSubPendapatan.setForeground(new java.awt.Color(22, 163, 52));
+        lblSubPendapatan.setText("↑ 0 transaksi selesai");
 
-        cardPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        cardPelanggan.setForeground(new java.awt.Color(15, 15, 23));
-        cardPelanggan.setText("Kelola Pelanggan");
-        card1.add(cardPelanggan);
-        cardPelanggan.setBounds(62, 27, 155, 20);
+        javax.swing.GroupLayout cardPendapatanLayout = new javax.swing.GroupLayout(cardPendapatan);
+        cardPendapatan.setLayout(cardPendapatanLayout);
+        cardPendapatanLayout.setHorizontalGroup(
+            cardPendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardPendapatanLayout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(cardPendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblSubPendapatan)
+                    .addComponent(lblValPendapatan)
+                    .addComponent(lblTitlePendapatan))
+                .addContainerGap(59, Short.MAX_VALUE))
+        );
+        cardPendapatanLayout.setVerticalGroup(
+            cardPendapatanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardPendapatanLayout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addComponent(lblTitlePendapatan)
+                .addGap(8, 8, 8)
+                .addComponent(lblValPendapatan)
+                .addGap(8, 8, 8)
+                .addComponent(lblSubPendapatan)
+                .addContainerGap(24, Short.MAX_VALUE))
+        );
 
-        panelKonten.add(card1);
-        card1.setBounds(35, 75, 230, 75);
+        cardLaku.setBackground(new java.awt.Color(255, 255, 255));
 
-        card2.setBackground(new java.awt.Color(255, 255, 255));
-        card2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        card2.setLayout(null);
+        lblTitleLaku.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
+        lblTitleLaku.setForeground(new java.awt.Color(71, 85, 105));
+        lblTitleLaku.setText("Semen Paling Laku");
 
-        badgeBox2.setBackground(new java.awt.Color(254, 238, 223));
-        badgeBox2.setLayout(new java.awt.GridBagLayout());
+        lblValLaku.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        lblValLaku.setForeground(new java.awt.Color(15, 23, 34));
+        lblValLaku.setText("-");
 
-        lblAngka2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblAngka2.setForeground(new java.awt.Color(217, 112, 24));
-        lblAngka2.setText("2");
-        badgeBox2.add(lblAngka2, new java.awt.GridBagConstraints());
+        lblSubLaku.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
+        lblSubLaku.setForeground(new java.awt.Color(100, 116, 139));
+        lblSubLaku.setText("Terjual: 0 Sak");
 
-        card2.add(badgeBox2);
-        badgeBox2.setBounds(15, 16, 36, 42);
+        javax.swing.GroupLayout cardLakuLayout = new javax.swing.GroupLayout(cardLaku);
+        cardLaku.setLayout(cardLakuLayout);
+        cardLakuLayout.setHorizontalGroup(
+            cardLakuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardLakuLayout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(cardLakuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblSubLaku)
+                    .addComponent(lblValLaku)
+                    .addComponent(lblTitleLaku))
+                .addContainerGap(108, Short.MAX_VALUE))
+        );
+        cardLakuLayout.setVerticalGroup(
+            cardLakuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardLakuLayout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addComponent(lblTitleLaku)
+                .addGap(8, 8, 8)
+                .addComponent(lblValLaku)
+                .addGap(8, 8, 8)
+                .addComponent(lblSubLaku)
+                .addContainerGap(15, Short.MAX_VALUE))
+        );
 
-        cardPesanan.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        cardPesanan.setForeground(new java.awt.Color(15, 15, 23));
-        cardPesanan.setText("Pencatatan Pesanan");
-        card2.add(cardPesanan);
-        cardPesanan.setBounds(62, 27, 155, 20);
+        cardAktif.setBackground(new java.awt.Color(255, 255, 255));
 
-        panelKonten.add(card2);
-        card2.setBounds(280, 75, 230, 75);
+        lblTitleAktif.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
+        lblTitleAktif.setForeground(new java.awt.Color(71, 85, 105));
+        lblTitleAktif.setText("Pesanan Aktif Berjalan");
 
-        card3.setBackground(new java.awt.Color(255, 255, 255));
-        card3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        card3.setLayout(null);
+        lblValAktif.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblValAktif.setForeground(new java.awt.Color(15, 23, 34));
+        lblValAktif.setText("0 Pesanan");
 
-        badgeBox3.setBackground(new java.awt.Color(254, 245, 213));
-        badgeBox3.setLayout(new java.awt.GridBagLayout());
+        lblSubAktif.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
+        lblSubAktif.setForeground(new java.awt.Color(100, 116, 139));
+        lblSubAktif.setText("0 Proses Kirim • 0 Menunggu");
 
-        lblAngka3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblAngka3.setForeground(new java.awt.Color(217, 119, 6));
-        lblAngka3.setText("3");
-        badgeBox3.add(lblAngka3, new java.awt.GridBagConstraints());
+        javax.swing.GroupLayout cardAktifLayout = new javax.swing.GroupLayout(cardAktif);
+        cardAktif.setLayout(cardAktifLayout);
+        cardAktifLayout.setHorizontalGroup(
+            cardAktifLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardAktifLayout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(cardAktifLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblSubAktif)
+                    .addComponent(lblValAktif)
+                    .addComponent(lblTitleAktif))
+                .addContainerGap(77, Short.MAX_VALUE))
+        );
+        cardAktifLayout.setVerticalGroup(
+            cardAktifLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(cardAktifLayout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addComponent(lblTitleAktif)
+                .addGap(8, 8, 8)
+                .addComponent(lblValAktif)
+                .addGap(8, 8, 8)
+                .addComponent(lblSubAktif)
+                .addContainerGap(15, Short.MAX_VALUE))
+        );
 
-        card3.add(badgeBox3);
-        badgeBox3.setBounds(15, 16, 36, 42);
-
-        cardStatus.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        cardStatus.setForeground(new java.awt.Color(15, 15, 23));
-        cardStatus.setText("Pembaruan Status");
-        card3.add(cardStatus);
-        cardStatus.setBounds(62, 27, 155, 20);
-
-        panelKonten.add(card3);
-        card3.setBounds(525, 75, 230, 75);
-
-        panelTabelContainer.setBackground(new java.awt.Color(255, 255, 255));
-        panelTabelContainer.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        panelTabelContainer.setLayout(null);
+        panelCardTabel.setBackground(new java.awt.Color(255, 255, 255));
 
         lblTabelTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblTabelTitle.setForeground(new java.awt.Color(15, 15, 23));
+        lblTabelTitle.setForeground(new java.awt.Color(15, 23, 34));
         lblTabelTitle.setText("Daftar Riwayat & Rekap Pesanan");
-        panelTabelContainer.add(lblTabelTitle);
-        lblTabelTitle.setBounds(24, 20, 300, 20);
 
         jScrollPaneTabel.setBorder(null);
 
-        tblRekapPesanan.setModel(new javax.swing.table.DefaultTableModel(
+        tblRiwayat.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -535,44 +652,97 @@ public class FormMenuStaf extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        tblRekapPesanan.setRowHeight(48);
-        tblRekapPesanan.setSelectionBackground(new java.awt.Color(248, 248, 248));
-        tblRekapPesanan.setShowGrid(false);
-        jScrollPaneTabel.setViewportView(tblRekapPesanan);
+        tblRiwayat.setRowHeight(48);
+        tblRiwayat.setSelectionBackground(new java.awt.Color(241, 245, 249));
+        tblRiwayat.setSelectionForeground(new java.awt.Color(15, 23, 42));
+        tblRiwayat.setShowGrid(false);
+        jScrollPaneTabel.setViewportView(tblRiwayat);
 
-        panelTabelContainer.add(jScrollPaneTabel);
-        jScrollPaneTabel.setBounds(24, 55, 720, 375);
+        javax.swing.GroupLayout panelCardTabelLayout = new javax.swing.GroupLayout(panelCardTabel);
+        panelCardTabel.setLayout(panelCardTabelLayout);
+        panelCardTabelLayout.setHorizontalGroup(
+            panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelCardTabelLayout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addGroup(panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblTabelTitle)
+                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 650, Short.MAX_VALUE))
+                .addGap(20, 20, 20))
+        );
+        panelCardTabelLayout.setVerticalGroup(
+            panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelCardTabelLayout.createSequentialGroup()
+                .addGap(18, 18, 18)
+                .addComponent(lblTabelTitle)
+                .addGap(14, 14, 14)
+                .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                .addGap(20, 20, 20))
+        );
 
-        panelKonten.add(panelTabelContainer);
-        panelTabelContainer.setBounds(35, 175, 770, 450);
+        javax.swing.GroupLayout panelUtamaLayout = new javax.swing.GroupLayout(panelUtama);
+        panelUtama.setLayout(panelUtamaLayout);
+        panelUtamaLayout.setHorizontalGroup(
+            panelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelUtamaLayout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addGroup(panelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(lblJudulMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 400, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(panelUtamaLayout.createSequentialGroup()
+                        .addComponent(cardPendapatan, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(14, 14, 14)
+                        .addComponent(cardLaku, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(14, 14, 14)
+                        .addComponent(cardAktif, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(panelCardTabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        panelUtamaLayout.setVerticalGroup(
+            panelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelUtamaLayout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addComponent(lblJudulMenu)
+                .addGap(20, 20, 20)
+                .addGroup(panelUtamaLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(cardPendapatan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cardLaku, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(cardAktif, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(24, 24, 24)
+                .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
 
-        getContentPane().add(panelKonten, java.awt.BorderLayout.CENTER);
+        getContentPane().add(panelUtama, java.awt.BorderLayout.CENTER);
 
         pack();
-        setSize(1080, 680);
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
-    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
-        int confirm = JOptionPane.showConfirmDialog(
-            this,
-            "Apakah Anda yakin ingin logout dari sistem?",
-            "Konfirmasi Logout",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.QUESTION_MESSAGE
-        );
+    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavPelangganActionPerformed
+        new FormKelolaPelanggan().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnNavPelangganActionPerformed
 
-        if (confirm == JOptionPane.YES_OPTION) {
-            SesiPengguna.setPengguna(null);
-            new FormLogin().setVisible(true);
-            this.dispose();
-        }
-    }//GEN-LAST:event_btnLogoutActionPerformed
+    private void btnNavPesananActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavPesananActionPerformed
+        new FormPencatatanPesanan().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnNavPesananActionPerformed
 
     private void btnNavStatusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavStatusActionPerformed
         new FormStatusPengiriman().setVisible(true);
         this.dispose();
     }//GEN-LAST:event_btnNavStatusActionPerformed
+
+    private void btnKeluarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnKeluarActionPerformed
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Apakah Anda yakin ingin keluar?",
+                "Konfirmasi Keluar",
+                JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            SesiPengguna.setPengguna(null);
+            new FormLogin().setVisible(true);
+            this.dispose();
+        }
+    }//GEN-LAST:event_btnKeluarActionPerformed
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
@@ -581,34 +751,34 @@ public class FormMenuStaf extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel badgeBox1;
-    private javax.swing.JPanel badgeBox2;
-    private javax.swing.JPanel badgeBox3;
-    private javax.swing.JButton btnLogout;
+    private javax.swing.JButton btnKeluar;
     private javax.swing.JButton btnNavMenu;
     private javax.swing.JButton btnNavPelanggan;
     private javax.swing.JButton btnNavPesanan;
     private javax.swing.JButton btnNavStatus;
-    private javax.swing.JPanel card1;
-    private javax.swing.JPanel card2;
-    private javax.swing.JPanel card3;
-    private javax.swing.JLabel cardPelanggan;
-    private javax.swing.JLabel cardPesanan;
-    private javax.swing.JLabel cardStatus;
+    private javax.swing.JPanel cardAktif;
+    private javax.swing.JPanel cardLaku;
+    private javax.swing.JPanel cardPendapatan;
     private javax.swing.JScrollPane jScrollPaneTabel;
-    private javax.swing.JLabel lblAngka1;
-    private javax.swing.JLabel lblAngka2;
-    private javax.swing.JLabel lblAngka3;
     private javax.swing.JLabel lblDotStatus;
-    private javax.swing.JLabel lblHeaderTitle;
+    private javax.swing.JLabel lblJudulMenu;
     private javax.swing.JLabel lblLogoSidebar;
-    private javax.swing.JLabel lblNamaStaf;
+    private javax.swing.JLabel lblRoleText;
+    private javax.swing.JLabel lblSubAktif;
+    private javax.swing.JLabel lblSubLaku;
+    private javax.swing.JLabel lblSubPendapatan;
     private javax.swing.JLabel lblTabelTitle;
-    private javax.swing.JLabel lblWilayah;
+    private javax.swing.JLabel lblTitleAktif;
+    private javax.swing.JLabel lblTitleLaku;
+    private javax.swing.JLabel lblTitlePendapatan;
+    private javax.swing.JLabel lblValAktif;
+    private javax.swing.JLabel lblValLaku;
+    private javax.swing.JLabel lblValPendapatan;
+    private javax.swing.JLabel lblWilayahText;
     private javax.swing.JPanel panelBadgeUser;
-    private javax.swing.JPanel panelKonten;
+    private javax.swing.JPanel panelCardTabel;
     private javax.swing.JPanel panelSidebar;
-    private javax.swing.JPanel panelTabelContainer;
-    private javax.swing.JTable tblRekapPesanan;
+    private javax.swing.JPanel panelUtama;
+    private javax.swing.JTable tblRiwayat;
     // End of variables declaration//GEN-END:variables
 }

@@ -65,7 +65,7 @@
                   <Component id="lblLogoSidebar" min="-2" pref="70" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                   <Component id="panelBadgeUser" min="-2" pref="46" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" max="-2" attributes="0"/>
                   <Component id="btnNavMenu" min="-2" pref="42" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                   <Component id="btnNavPelanggan" min="-2" pref="42" max="-2" attributes="0"/>
@@ -73,7 +73,7 @@
                   <Component id="btnNavPesanan" min="-2" pref="42" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                   <Component id="btnNavStatus" min="-2" pref="42" max="-2" attributes="0"/>
-                  <EmptySpace pref="199" max="32767" attributes="0"/>
+                  <EmptySpace pref="218" max="32767" attributes="0"/>
                   <Component id="btnLogout" min="-2" pref="42" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
               </Group>
@@ -677,6 +677,9 @@
                     </Property>
                     <Property name="showGrid" type="boolean" value="false"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="mouseClicked" listener="java.awt.event.MouseListener" parameters="java.awt.event.MouseEvent" handler="tblPelangganMouseClicked"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>

@@ -31,6 +31,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import Service.SemenService;
 
 public class FormTambahStokSemen extends javax.swing.JFrame {
 
@@ -55,6 +56,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
     }
 
     private DefaultTableModel modelRiwayat;
+    private final Service.SemenService semenService = new Service.SemenService();
 
     public FormTambahStokSemen() {
         initComponents();
@@ -83,24 +85,16 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
     }
 
     private void tampilkanSesiPengguna() {
-        try {
-            Pengguna user = SesiPengguna.getPengguna();
-            if (user != null) {
-                lblRoleText.setText(user.getNamaLengkap());
-
-                String sqlShift = "SELECT shift FROM admin_gudang WHERE id_pengguna = ?";
-                try (Connection conn = Koneksi.getKoneksi();
-                     PreparedStatement ps = conn.prepareStatement(sqlShift)) {
-                    ps.setInt(1, user.getIdPengguna());
-                    try (ResultSet rs = ps.executeQuery()) {
-                        String shift = rs.next() ? rs.getString("shift") : "Pagi";
-                        lblShiftText.setText("Shift Kerja: " + shift);
-                        lblPetugasNama.setText("Petugas: " + user.getNamaLengkap() + " (ID: " + user.getIdPengguna() + ") | Shift: " + shift);
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-    }
+    try {
+        Pengguna user = SesiPengguna.getPengguna();
+        if (user instanceof Model.AdminGudang) {
+            Model.AdminGudang admin = (Model.AdminGudang) user;
+            lblRoleText.setText(admin.getNamaLengkap());
+            lblShiftText.setText("Shift Kerja: " + admin.getShift());
+            lblPetugasNama.setText("Petugas: " + admin.getNamaLengkap() + " (ID: " + admin.getIdPengguna() + ") | Shift: " + admin.getShift());
+        }
+    } catch (Exception ignored) {}
+}
 
     private void loadVarianSemen() {
         cmbVarianSemen.removeAllItems();
@@ -770,81 +764,24 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         Pengguna userAktif = SesiPengguna.getPengguna();
         int idAdmin = (userAktif != null) ? userAktif.getIdPengguna() : 16;
 
-        Connection conn = null;
         try {
-            conn = Koneksi.getKoneksi();
-            conn.setAutoCommit(false);
+            // Cukup panggil service layer
+            boolean sukses = semenService.catatPasokanMasuk(varian.getId(), batch, jumlah, idAdmin);
 
-            // 1. Generate ID Baru untuk stok_masuk (MAX + 1)
-            int newIdStokMasuk = 1;
-            String sqlMaxMasuk = "SELECT COALESCE(MAX(id_stok_masuk), 0) + 1 AS next_id FROM stok_masuk";
-            try (Statement st = conn.createStatement();
-                 ResultSet rs = st.executeQuery(sqlMaxMasuk)) {
-                if (rs.next()) {
-                    newIdStokMasuk = rs.getInt("next_id");
-                }
+            if (sukses) {
+                JOptionPane.showMessageDialog(this,
+                        "Pasokan sebanyak " + formatRupiah(jumlah) + " " + varian.getSatuan() + " berhasil ditambahkan!\n" +
+                        "Batch: " + batch + "\nStok semen di database telah diperbarui.",
+                        "Penyimpanan Berhasil",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                txtBatchProduksi.setText("");
+                txtInputStokBaru.setText("");
+                perbaruiInfoStokSaatIni();
+                loadTabelRiwayat();
             }
-
-            // 2. Generate ID Baru untuk detail_stok_masuk (MAX + 1)
-            int newIdDetailStok = 1;
-            String sqlMaxDetail = "SELECT COALESCE(MAX(id_detail_stok), 0) + 1 AS next_id FROM detail_stok_masuk";
-            try (Statement st = conn.createStatement();
-                 ResultSet rs = st.executeQuery(sqlMaxDetail)) {
-                if (rs.next()) {
-                    newIdDetailStok = rs.getInt("next_id");
-                }
-            }
-
-            // 3. Simpan ke tabel stok_masuk
-            String sqlStokMasuk = "INSERT INTO stok_masuk (id_stok_masuk, tgl_masuk, semen_id_semen, admin_gudang_id_pengguna) VALUES (?, CURDATE(), ?, ?)";
-            try (PreparedStatement psMasuk = conn.prepareStatement(sqlStokMasuk)) {
-                psMasuk.setInt(1, newIdStokMasuk);
-                psMasuk.setInt(2, varian.getId());
-                psMasuk.setInt(3, idAdmin);
-                psMasuk.executeUpdate();
-            }
-
-            // 4. Simpan ke tabel detail_stok_masuk
-            String sqlDetail = "INSERT INTO detail_stok_masuk (id_detail_stok, batch, jumlah_qty, stok_masuk_id_stok_masuk, semen_id_semen) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail)) {
-                psDetail.setInt(1, newIdDetailStok);
-                psDetail.setString(2, batch);
-                psDetail.setInt(3, jumlah);
-                psDetail.setInt(4, newIdStokMasuk);
-                psDetail.setInt(5, varian.getId());
-                psDetail.executeUpdate();
-            }
-
-            // 5. Tambahkan stok fisik langsung ke tabel semen
-            String sqlUpdateStok = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
-            try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdateStok)) {
-                psUpdate.setInt(1, jumlah);
-                psUpdate.setInt(2, varian.getId());
-                psUpdate.executeUpdate();
-            }
-
-            conn.commit();
-
-            JOptionPane.showMessageDialog(this,
-                    "Pasokan sebanyak " + formatRupiah(jumlah) + " " + varian.getSatuan() + " berhasil ditambahkan!\n" +
-                    "Batch: " + batch + "\nStok semen di database telah diperbarui.",
-                    "Penyimpanan Berhasil",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            txtBatchProduksi.setText("");
-            txtInputStokBaru.setText("");
-            perbaruiInfoStokSaatIni();
-            loadTabelRiwayat();
-
         } catch (SQLException ex) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ignored) {}
-            }
             JOptionPane.showMessageDialog(this, "Gagal menambahkan stok semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
-            }
         }
     }//GEN-LAST:event_btnSimpanDatabaseActionPerformed
 

@@ -5,7 +5,6 @@ import Model.Pengguna;
 import Model.StafPenjualan;
 import Util.SesiPengguna;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -82,6 +81,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     private final ArrayList<ItemProduk> cacheProduk = new ArrayList<>();
     private String metodePembayaranPilihan = "Tunai";
     private double akumulasiTotalTagihan = 0;
+    private int pelangganTerpilihIndex = 0;
 
     public FormPencatatanPesanan() {
         initComponents();
@@ -100,11 +100,11 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             }
         } catch (Exception ignored) {}
 
-        // 2. Muat data dari database yang sama dengan Admin Gudang
+        // 2. Muat data dari database
         loadDataPelangganKeCombo();
         loadDataProdukKeCombo();
 
-        // 3. Pasang logika perhitungan dan event
+        // 3. Pasang logika transaksi
         initLogikaTransaksi();
     }
 
@@ -129,9 +129,9 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Gagal memuat pelanggan: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
+        pelangganTerpilihIndex = cmbPelanggan.getSelectedIndex();
     }
 
-    // Mengambil langsung dari tabel semen agar 100% sinkron dengan Admin Gudang
     private void loadDataProdukKeCombo() {
         cmbProduk.removeAllItems();
         cacheProduk.clear();
@@ -189,15 +189,22 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         }
     }
 
+    public void kosongkanKeranjang() {
+        listKeranjang.clear();
+        akumulasiTotalTagihan = 0;
+        lblItemNama.setText("- Belum ada item ditambahkan -");
+        lblItemHarga.setText("Rp 0");
+        lblRingkasanItem.setText("Total Item: 0 Macam Produk Semen");
+        lblTotalTagihanBawah.setText("Rp 0");
+        lblTotalHarga.setText("Rp 0");
+        txtNominalBayar.setText("0");
+        txtJumlah.setText("");
+        txtSubtotalItem.setText("Rp 0");
+    }
+
     private void refreshTampilanDaftarItem() {
         if (listKeranjang.isEmpty()) {
-            lblItemNama.setText("- Belum ada item ditambahkan -");
-            lblItemHarga.setText("Rp 0");
-            lblRingkasanItem.setText("Total Item: 0 Macam Produk Semen");
-            lblTotalTagihanBawah.setText("Rp 0");
-            lblTotalHarga.setText("Rp 0");
-            akumulasiTotalTagihan = 0;
-            txtNominalBayar.setText("0");
+            kosongkanKeranjang();
             return;
         }
 
@@ -217,7 +224,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         lblItemNama.setText(namaSb.toString());
         lblItemHarga.setText(hargaSb.toString());
-        lblRingkasanItem.setText("Total Item: " + listKeranjang.size() + " Macam Produk Semen");
+        lblRingkasanItem.setText("Total Item: " + listKeranjang.size() + " Macam Produk Semen (Klik untuk Reset)");
         lblTotalTagihanBawah.setText("Rp " + formatRupiah(total));
         lblTotalHarga.setText("Rp " + formatRupiah(total));
         akumulasiTotalTagihan = total;
@@ -239,6 +246,26 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
             public void removeUpdate(DocumentEvent e) { hitungSubtotalItem(); }
             @Override
             public void changedUpdate(DocumentEvent e) { hitungSubtotalItem(); }
+        });
+
+        // Fitur reset keranjang jika salah input jumlah: klik panel daftar item
+        panelDaftarItem.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        panelDaftarItem.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (!listKeranjang.isEmpty()) {
+                    int konf = JOptionPane.showConfirmDialog(
+                        FormPencatatanPesanan.this,
+                        "Apakah Anda ingin mengosongkan/mereset seluruh isi item keranjang ini?",
+                        "Reset Item Keranjang",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE
+                    );
+                    if (konf == JOptionPane.YES_OPTION) {
+                        kosongkanKeranjang();
+                    }
+                }
+            }
         });
 
         btnTambahItem.addActionListener(e -> {
@@ -287,6 +314,34 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         });
 
         refreshTampilanDaftarItem();
+    }
+
+    private void cmbPelangganItemStateChanged(java.awt.event.ItemEvent evt) {
+        if (evt.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+            int selectedBaru = cmbPelanggan.getSelectedIndex();
+            if (selectedBaru == pelangganTerpilihIndex) return;
+
+            // Jika keranjang sudah terisi, minta konfirmasi untuk reset
+            if (!listKeranjang.isEmpty()) {
+                int konfirmasi = JOptionPane.showConfirmDialog(
+                    this,
+                    "Mengganti mitra pemesan akan mengosongkan daftar pesanan saat ini.\nLanjutkan mengganti pelanggan?",
+                    "Konfirmasi Ganti Pelanggan",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+
+                if (konfirmasi == JOptionPane.YES_OPTION) {
+                    kosongkanKeranjang();
+                    pelangganTerpilihIndex = selectedBaru;
+                } else {
+                    // Batalkan pergantian pelanggan
+                    java.awt.EventQueue.invokeLater(() -> cmbPelanggan.setSelectedIndex(pelangganTerpilihIndex));
+                }
+            } else {
+                pelangganTerpilihIndex = selectedBaru;
+            }
+        }
     }
 
     private void rapikanTampilan() {
@@ -338,8 +393,51 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         }
     }
 
+    private void btnMetodeTunaiActionPerformed(java.awt.event.ActionEvent evt) {
+        metodePembayaranPilihan = "Tunai";
+        btnMetodeTunai.setForeground(new java.awt.Color(234, 88, 12));
+        btnMetodeTransfer.setForeground(new java.awt.Color(71, 85, 105));
+    }
+
+    private void btnMetodeTransferActionPerformed(java.awt.event.ActionEvent evt) {
+        metodePembayaranPilihan = "Transfer"; // ubah dari "Transfer Bank" jadi "Transfer"
+        btnMetodeTransfer.setForeground(new java.awt.Color(234, 88, 12));
+        btnMetodeTunai.setForeground(new java.awt.Color(71, 85, 105));
+    }
+
+    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {
+        new FormMenuStaf().setVisible(true);
+        this.dispose();
+    }
+
+    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {
+        new FormKelolaPelanggan().setVisible(true);
+        this.dispose();
+    }
+
+    private void btnNavStatusActionPerformed(java.awt.event.ActionEvent evt) {
+        new FormStatusPengiriman().setVisible(true);
+        this.dispose();
+    }
+
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {                                          
+        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin keluar dari sistem?", "Konfirmasi Logout", JOptionPane.YES_NO_OPTION);
+        if (confirm == JOptionPane.YES_OPTION) {
+            new FormLogin().setVisible(true);
+            this.dispose();
+        }
+    }
+    
+    private void cmbStatusBayarActionPerformed(java.awt.event.ActionEvent evt) {                                               
+        if (cmbStatusBayar.getSelectedIndex() == 1) { // Pilihan: Lunas
+            txtNominalBayar.setText(String.valueOf((long) akumulasiTotalTagihan));
+        } else { // Pilihan: Belum Lunas
+            txtNominalBayar.setText(String.valueOf((long) (akumulasiTotalTagihan / 2)));
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         panelSidebar = new javax.swing.JPanel();
@@ -391,7 +489,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Pencatatan Pesanan Semen");
-        setPreferredSize(new java.awt.Dimension(1080, 680));
         setResizable(false);
 
         panelSidebar.setBackground(new java.awt.Color(22, 27, 34));
@@ -401,15 +498,15 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         panelBadgeUser.setBackground(new java.awt.Color(33, 39, 50));
 
-        lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblDotStatus.setForeground(new java.awt.Color(34, 196, 95));
         lblDotStatus.setText("●");
 
-        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblRoleText.setForeground(new java.awt.Color(248, 248, 248));
         lblRoleText.setText("Staf Penjualan");
 
-        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10));
+        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblWilayahText.setForeground(new java.awt.Color(134, 148, 160));
         lblWilayahText.setText("Samarinda Ulu");
 
@@ -448,8 +545,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnNavMenu.setMargin(new java.awt.Insets(2, 18, 2, 14));
         btnNavMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                new FormMenuStaf().setVisible(true);
-                dispose();
+                btnNavMenuActionPerformed(evt);
             }
         });
 
@@ -463,13 +559,12 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnNavPelanggan.setMargin(new java.awt.Insets(2, 18, 2, 14));
         btnNavPelanggan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                new FormKelolaPelanggan().setVisible(true);
-                dispose();
+                btnNavPelangganActionPerformed(evt);
             }
         });
 
         btnNavPesanan.setBackground(new java.awt.Color(234, 88, 12));
-        btnNavPesanan.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnNavPesanan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnNavPesanan.setForeground(new java.awt.Color(255, 255, 255));
         btnNavPesanan.setText("Pencatatan Pesanan");
         btnNavPesanan.setBorderPainted(false);
@@ -488,13 +583,12 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnNavStatus.setMargin(new java.awt.Insets(2, 18, 2, 14));
         btnNavStatus.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                new FormStatusPengiriman().setVisible(true);
-                dispose();
+                btnNavStatusActionPerformed(evt);
             }
         });
 
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
-        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
         btnLogout.setText("Logout");
         btnLogout.setBorderPainted(false);
@@ -502,12 +596,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnLogout.setFocusPainted(false);
         btnLogout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                int confirm = JOptionPane.showConfirmDialog(FormPencatatanPesanan.this, "Apakah Anda yakin ingin keluar?", "Konfirmasi Logout", JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    SesiPengguna.setPengguna(null);
-                    new FormLogin().setVisible(true);
-                    dispose();
-                }
+                btnLogoutActionPerformed(evt);
             }
         });
 
@@ -551,84 +640,94 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         panelKonten.setBackground(new java.awt.Color(248, 250, 252));
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24));
+        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
         lblHeaderTitle.setText("Pencatatan Pesanan Semen");
 
         panelCard1.setBackground(new java.awt.Color(255, 255, 255));
-        panelCard1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
+        panelCard1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        lblTitleCard1.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblTitleCard1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblTitleCard1.setForeground(new java.awt.Color(15, 15, 23));
         lblTitleCard1.setText("1. Input Mitra dan Produk");
 
-        lblPilihPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblPilihPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblPilihPelanggan.setForeground(new java.awt.Color(71, 85, 105));
         lblPilihPelanggan.setText("Pilih ID Pelanggan");
 
-        lblPilihVarian.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        cmbPelanggan.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "[ID: 11] Toko Bangunan Berkah Mandiri", "[ID: 1] Toko Bangunan Maju Jaya", "[ID: 2] CV Karya Mandiri" }));
+        cmbPelanggan.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                cmbPelangganItemStateChanged(evt);
+            }
+        });
+
+        lblPilihVarian.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblPilihVarian.setForeground(new java.awt.Color(71, 85, 105));
         lblPilihVarian.setText("Pilih Varian Semen");
+
+        cmbProduk.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Semen Sak 50kg (Rp 68.000 / Sak)", "Semen Sak 40kg (Rp 55.000 / Sak)", "Semen Curah (Rp 1.100.000 / Ton)" }));
 
         panelBadgeStok.setBackground(new java.awt.Color(220, 252, 231));
         panelBadgeStok.setLayout(new java.awt.GridBagLayout());
 
-        lblStokGudang.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblStokGudang.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblStokGudang.setForeground(new java.awt.Color(22, 101, 52));
-        lblStokGudang.setText("Stok Fisik Gudang Tersedia: Memuat...");
+        lblStokGudang.setText("Stok Fisik Gudang Tersedia: 10.000 Sak");
         panelBadgeStok.add(lblStokGudang, new java.awt.GridBagConstraints());
 
-        lblJumlah.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblJumlah.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblJumlah.setForeground(new java.awt.Color(71, 85, 105));
         lblJumlah.setText("Jumlah Pesanan (Sak/Ton)");
 
-        txtJumlah.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        txtJumlah.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        txtJumlah.setText("250");
 
-        lblSubtotalItem.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblSubtotalItem.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblSubtotalItem.setForeground(new java.awt.Color(71, 85, 105));
         lblSubtotalItem.setText("Subtotal Item");
 
         txtSubtotalItem.setEditable(false);
-        txtSubtotalItem.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        txtSubtotalItem.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         txtSubtotalItem.setForeground(new java.awt.Color(234, 88, 12));
-        txtSubtotalItem.setText("Rp 0");
+        txtSubtotalItem.setText("Rp 17.000.000");
 
         btnTambahItem.setBackground(new java.awt.Color(30, 37, 43));
-        btnTambahItem.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnTambahItem.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnTambahItem.setForeground(new java.awt.Color(255, 255, 255));
         btnTambahItem.setText("+ Masukkan ke Daftar Item");
         btnTambahItem.setBorderPainted(false);
         btnTambahItem.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnTambahItem.setFocusPainted(false);
 
-        lblHeaderDaftarItem.setFont(new java.awt.Font("Segoe UI", 1, 10));
+        lblHeaderDaftarItem.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
         lblHeaderDaftarItem.setForeground(new java.awt.Color(100, 116, 139));
         lblHeaderDaftarItem.setText("DAFTAR ITEM PESANAN:");
 
         panelDaftarItem.setBackground(new java.awt.Color(248, 249, 250));
-        panelDaftarItem.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
+        panelDaftarItem.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        lblItemNama.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblItemNama.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblItemNama.setForeground(new java.awt.Color(15, 15, 23));
-        lblItemNama.setText("- Belum ada item ditambahkan -");
+        lblItemNama.setText("1. Semen Sak 50kg (250 Sak)");
 
-        lblItemHarga.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblItemHarga.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblItemHarga.setForeground(new java.awt.Color(234, 88, 12));
         lblItemHarga.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblItemHarga.setText("Rp 0");
+        lblItemHarga.setText("Rp 17.000.000");
 
-        lblRingkasanItem.setFont(new java.awt.Font("Segoe UI", 0, 11));
+        lblRingkasanItem.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
         lblRingkasanItem.setForeground(new java.awt.Color(100, 116, 139));
-        lblRingkasanItem.setText("Total Item: 0 Macam Produk Semen");
+        lblRingkasanItem.setText("Total Item: 1 Macam Produk Semen");
 
-        lblTextTotalTagihan.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblTextTotalTagihan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblTextTotalTagihan.setForeground(new java.awt.Color(15, 15, 23));
         lblTextTotalTagihan.setText("Total Tagihan:");
 
-        lblTotalTagihanBawah.setFont(new java.awt.Font("Segoe UI", 1, 13));
+        lblTotalTagihanBawah.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
         lblTotalTagihanBawah.setForeground(new java.awt.Color(234, 88, 12));
         lblTotalTagihanBawah.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-        lblTotalTagihanBawah.setText("Rp 0");
+        lblTotalTagihanBawah.setText("Rp 17.000.000");
 
         javax.swing.GroupLayout panelDaftarItemLayout = new javax.swing.GroupLayout(panelDaftarItem);
         panelDaftarItem.setLayout(panelDaftarItemLayout);
@@ -725,22 +824,22 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         );
 
         panelCard2.setBackground(new java.awt.Color(255, 255, 255));
-        panelCard2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
+        panelCard2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        lblTitleCard2.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblTitleCard2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblTitleCard2.setForeground(new java.awt.Color(15, 15, 23));
         lblTitleCard2.setText("2. Kalkulasi Tagihan dan Status Bayar");
 
         panelBoxTotal.setBackground(new java.awt.Color(255, 255, 255));
-        panelBoxTotal.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
+        panelBoxTotal.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
 
-        lblKetTotalBayar.setFont(new java.awt.Font("Segoe UI", 1, 10));
+        lblKetTotalBayar.setFont(new java.awt.Font("Segoe UI", 1, 10)); // NOI18N
         lblKetTotalBayar.setForeground(new java.awt.Color(100, 116, 139));
         lblKetTotalBayar.setText("TOTAL HARGA YANG HARUS DIBAYAR");
 
-        lblTotalHarga.setFont(new java.awt.Font("Segoe UI", 1, 22));
+        lblTotalHarga.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
         lblTotalHarga.setForeground(new java.awt.Color(234, 88, 12));
-        lblTotalHarga.setText("Rp 0");
+        lblTotalHarga.setText("Rp 17.000.000");
 
         javax.swing.GroupLayout panelBoxTotalLayout = new javax.swing.GroupLayout(panelBoxTotal);
         panelBoxTotal.setLayout(panelBoxTotalLayout);
@@ -763,63 +862,54 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
                 .addContainerGap(13, Short.MAX_VALUE))
         );
 
-        lblMetodeBayar.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblMetodeBayar.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblMetodeBayar.setForeground(new java.awt.Color(71, 85, 105));
         lblMetodeBayar.setText("Metode Pembayaran");
 
-        btnMetodeTunai.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnMetodeTunai.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnMetodeTunai.setForeground(new java.awt.Color(234, 88, 12));
         btnMetodeTunai.setText("Tunai");
-        btnMetodeTunai.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(234, 88, 12), 1, true));
+        btnMetodeTunai.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         btnMetodeTunai.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMetodeTunai.setFocusPainted(false);
         btnMetodeTunai.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                metodePembayaranPilihan = "Tunai";
-                btnMetodeTunai.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                btnMetodeTunai.setForeground(new Color(234, 88, 12));
-                btnMetodeTunai.setBorder(new LineBorder(new Color(234, 88, 12), 1, true));
-
-                btnMetodeTransfer.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                btnMetodeTransfer.setForeground(new Color(71, 85, 105));
-                btnMetodeTransfer.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
+                btnMetodeTunaiActionPerformed(evt);
             }
         });
 
         btnMetodeTransfer.setForeground(new java.awt.Color(71, 85, 105));
         btnMetodeTransfer.setText("Transfer Bank");
-        btnMetodeTransfer.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
+        btnMetodeTransfer.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 1, true));
         btnMetodeTransfer.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMetodeTransfer.setFocusPainted(false);
         btnMetodeTransfer.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                metodePembayaranPilihan = "Transfer";
-                btnMetodeTransfer.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                btnMetodeTransfer.setForeground(new Color(234, 88, 12));
-                btnMetodeTransfer.setBorder(new LineBorder(new Color(234, 88, 12), 1, true));
-
-                btnMetodeTunai.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-                btnMetodeTunai.setForeground(new Color(71, 85, 105));
-                btnMetodeTunai.setBorder(new LineBorder(new Color(226, 232, 240), 1, true));
+                btnMetodeTransferActionPerformed(evt);
             }
         });
 
-        lblStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblStatusBayar.setForeground(new java.awt.Color(71, 85, 105));
         lblStatusBayar.setText("Status Pembayaran Saat Ini");
 
-        cmbStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        cmbStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         cmbStatusBayar.setForeground(new java.awt.Color(180, 83, 9));
         cmbStatusBayar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Belum Lunas (Menunggu Pembayaran)", "Lunas" }));
+        cmbStatusBayar.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbStatusBayarActionPerformed(evt);
+            }
+        });
 
-        lblNominalUang.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblNominalUang.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblNominalUang.setForeground(new java.awt.Color(71, 85, 105));
         lblNominalUang.setText("Nominal Uang Masuk (Rp)");
 
-        txtNominalBayar.setText("0");
+        txtNominalBayar.setText("8.500.000");
 
         btnCatatPesanan.setBackground(new java.awt.Color(234, 88, 12));
-        btnCatatPesanan.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnCatatPesanan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnCatatPesanan.setForeground(new java.awt.Color(255, 255, 255));
         btnCatatPesanan.setText("CATAT PESANAN KE SISTEM");
         btnCatatPesanan.setBorderPainted(false);
@@ -908,7 +998,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>//GEN-END:initComponents
+    }// </editor-fold>                        
 
     private void btnCatatPesananActionPerformed(java.awt.event.ActionEvent evt) {
         if (listKeranjang.isEmpty()) {
@@ -1023,7 +1113,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
                 st.execute("SET FOREIGN_KEY_CHECKS = 1");
             }
 
-            conn.commit(); // Simpan perubahan secara permanen
+            conn.commit(); // Simpan perubahan permanen
 
             JOptionPane.showMessageDialog(this,
                     "Pesanan semen #" + nextIdPesanan + " berhasil dicatat!\n" +
@@ -1033,9 +1123,8 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
                     "Pencatatan Sukses",
                     JOptionPane.INFORMATION_MESSAGE);
 
-            // Reset form input & refresh produk
-            listKeranjang.clear();
-            refreshTampilanDaftarItem();
+            // Bersihkan form input & sinkronisasi data produk terkini
+            kosongkanKeranjang();
             loadDataProdukKeCombo();
 
         } catch (SQLException ex) {
@@ -1061,7 +1150,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
+    // Variables declaration - do not modify                     
     private javax.swing.JButton btnCatatPesanan;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnMetodeTransfer;
@@ -1108,5 +1197,5 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     private javax.swing.JTextField txtJumlah;
     private javax.swing.JTextField txtNominalBayar;
     private javax.swing.JTextField txtSubtotalItem;
-    // End of variables declaration//GEN-END:variables
+    // End of variables declaration                   
 }
