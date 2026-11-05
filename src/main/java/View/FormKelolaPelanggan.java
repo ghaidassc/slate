@@ -35,17 +35,22 @@ import javax.swing.table.JTableHeader;
 public class FormKelolaPelanggan extends javax.swing.JFrame {
 
     private final ArrayList<String> daftarAlamatDb = new ArrayList<>();
+    private boolean isModeEdit = false;
 
     public FormKelolaPelanggan() {
         initComponents();
+        this.setSize(1080, 680);
         this.setLocationRelativeTo(null);
         rapikanTampilanTambahan();
         pasangLogoSidebar();
+
+        cmbJenis.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] {
+            "Toko Bangunan", "Kontraktor"
+        }));
+
         desainTabelDanBadge();
 
-        txtIdPelanggan.setEditable(false);
-
-        // Ambil data profil staf yang login
+        // Ambil data staf login
         try {
             Pengguna currentUser = SesiPengguna.getPengguna();
             if (currentUser instanceof StafPenjualan) {
@@ -55,20 +60,10 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         } catch (Exception ignored) {}
 
-        // Navigasi menu sidebar
-        btnNavPesanan.addActionListener(evt -> {
-            new FormPencatatanPesanan().setVisible(true);
-            dispose();
-        });
-        
-        btnNavStatus.addActionListener(evt -> {
-            new FormStatusPengiriman().setVisible(true);
-            dispose();
-        });
-
-        // Muat data pelanggan dan pasang event listener
+        // Inisialisasi event & muat data
         loadDataPelanggan("");
         initActionEvents();
+        resetFormKeModeBaru();
     }
 
     private void rapikanTampilanTambahan() {
@@ -80,32 +75,67 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         txtTelepon.setBorder(BorderFactory.createCompoundBorder(borderField, paddingField));
         txtCari.setBorder(BorderFactory.createCompoundBorder(borderField, paddingField));
         txtAlamat.setBorder(new EmptyBorder(6, 8, 6, 8));
+        
+        panelFormCard.setBorder(borderField);
+        panelTabelCard.setBorder(borderField);
     }
 
     private void pasangLogoSidebar() {
         try {
-            java.net.URL logoUrl = getClass().getResource("/view/logo_slate.png.jpg");
-            if (logoUrl == null) {
-                logoUrl = getClass().getResource("/view/logo_slate.png");
+            BufferedImage imgAsli = null;
+            String[] jalur = {
+                "src/main/java/view/logo_slate.png.jpg",
+                "src/main/java/view/logo_slate.png",
+                "src/main/java/view/logonew.jpg"
+            };
+
+            for (String j : jalur) {
+                File f = new File(j);
+                if (f.exists()) {
+                    imgAsli = ImageIO.read(f);
+                    break;
+                }
             }
 
-            if (logoUrl != null) {
-                BufferedImage imgAsli = ImageIO.read(logoUrl);
-                if (imgAsli != null) {
-                    int rgbPojok = imgAsli.getRGB(0, 0);
-                    Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                    panelSidebar.setBackground(warnaAsliLogo);
+            if (imgAsli == null) {
+                InputStream stream = getClass().getResourceAsStream("/view/logo_slate.png.jpg");
+                if (stream == null) stream = getClass().getResourceAsStream("/view/logo_slate.png");
+                if (stream == null) stream = getClass().getResourceAsStream("/view/logonew.jpg");
+                if (stream != null) imgAsli = ImageIO.read(stream);
+            }
 
-                    Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
-                    lblLogoSidebar.setIcon(new ImageIcon(imgResized));
-                    lblLogoSidebar.setText("");
-                }
+            if (imgAsli != null) {
+                int rgbPojok = imgAsli.getRGB(0, 0);
+                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
+                panelSidebar.setBackground(warnaAsliLogo);
+
+                Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
+                lblLogoSidebar.setIcon(new ImageIcon(imgResized));
+                lblLogoSidebar.setText("");
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
         } catch (Exception e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
+    }
+
+    // Mengembalikan form ke mode input manual
+    private void resetFormKeModeBaru() {
+        isModeEdit = false;
+        txtIdPelanggan.setEditable(true);
+        txtIdPelanggan.setText("");
+        txtNamaUsaha.setText("");
+        cmbJenis.setSelectedIndex(0);
+        txtTelepon.setText("");
+        txtAlamat.setText("");
+        tblPelanggan.clearSelection();
+
+        lblFormTitle.setText("Form Data Mitra (Tambah Baru)");
+        btnSimpan.setEnabled(true);
+        btnUbah.setEnabled(false);
+        btnHapus.setEnabled(false);
+        txtIdPelanggan.requestFocus();
     }
 
     private void loadDataPelanggan(String keyword) {
@@ -144,13 +174,19 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
     }
 
     private void initActionEvents() {
-        // Klik Baris Tabel -> Otomatis Isi Field Form Kiri
+        // Klik Baris Tabel -> Masuk Mode Edit & Isi Field Form
         tblPelanggan.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 int selectedRow = tblPelanggan.getSelectedRow();
                 if (selectedRow != -1) {
-                    txtIdPelanggan.setText(tblPelanggan.getValueAt(selectedRow, 0).toString());
+                    isModeEdit = true;
+                    String idTerpilih = tblPelanggan.getValueAt(selectedRow, 0).toString();
+                    
+                    // Kunci ID saat mode edit agar tidak diubah sembarangan
+                    txtIdPelanggan.setText(idTerpilih);
+                    txtIdPelanggan.setEditable(false);
+                    
                     txtNamaUsaha.setText(tblPelanggan.getValueAt(selectedRow, 1).toString());
                     
                     String jenis = tblPelanggan.getValueAt(selectedRow, 2).toString();
@@ -165,48 +201,77 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                     if (selectedRow < daftarAlamatDb.size()) {
                         txtAlamat.setText(daftarAlamatDb.get(selectedRow));
                     }
+
+                    lblFormTitle.setText("Form Data Mitra (Edit Data - ID: #" + idTerpilih + ")");
+                    btnSimpan.setEnabled(false);
+                    btnUbah.setEnabled(true);
+                    btnHapus.setEnabled(true);
                 }
             }
         });
 
-        // Tombol Simpan
+        // Tombol Simpan (Input Manual ID Pelanggan)
         btnSimpan.addActionListener(e -> {
-            String idStr = txtIdPelanggan.getText().trim();
-            if (!idStr.isEmpty()) {
-                int opsi = JOptionPane.showConfirmDialog(
-                    this,
-                    "Form saat ini memilih data ID: " + idStr + ".\nApakah Anda ingin mengosongkan form untuk menambah pelanggan baru?",
-                    "Konfirmasi Tambah Baru",
-                    JOptionPane.YES_NO_OPTION
-                );
-                if (opsi == JOptionPane.YES_OPTION) {
-                    btnResetActionPerformed(null);
-                }
+            if (isModeEdit) {
+                JOptionPane.showMessageDialog(this, "Data ini sudah dipilih dari tabel. Klik 'Ubah' untuk menyimpan perubahan atau klik 'Kosongkan Form' untuk menambah data baru!", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
+            String idStr = txtIdPelanggan.getText().trim();
             String nama = txtNamaUsaha.getText().trim();
             String jenis = cmbJenis.getSelectedItem().toString();
             String telp = txtTelepon.getText().trim();
             String alamat = txtAlamat.getText().trim();
 
-            if (nama.isEmpty() || telp.isEmpty() || alamat.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Mohon lengkapi semua isian data!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            if (idStr.isEmpty() || nama.isEmpty() || telp.isEmpty() || alamat.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Mohon lengkapi seluruh isian data mitra (termasuk ID Pelanggan)!", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            String sql = "INSERT INTO pelanggan (nama_usaha, jenis_pelanggan, no_telepon, alamat_kirim) VALUES (?, ?, ?, ?)";
+            int idInput;
+            try {
+                idInput = Integer.parseInt(idStr);
+                if (idInput <= 0) {
+                    JOptionPane.showMessageDialog(this, "ID Pelanggan harus berupa angka positif lebih dari 0!", "Validasi Masukan", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "ID Pelanggan harus berupa angka valid!", "Format Salah", JOptionPane.ERROR_MESSAGE);
+                txtIdPelanggan.requestFocus();
+                return;
+            }
+
+            // Validasi apakah ID Pelanggan sudah ada di database
+            String sqlCek = "SELECT id_pelanggan FROM pelanggan WHERE id_pelanggan = ?";
+            try (Connection conn = Koneksi.getKoneksi();
+                 PreparedStatement psCek = conn.prepareStatement(sqlCek)) {
+                psCek.setInt(1, idInput);
+                try (ResultSet rsCek = psCek.executeQuery()) {
+                    if (rsCek.next()) {
+                        JOptionPane.showMessageDialog(this, "ID Pelanggan #" + idInput + " sudah terdaftar di database! Masukkan ID yang berbeda.", "ID Duplikat", JOptionPane.WARNING_MESSAGE);
+                        txtIdPelanggan.requestFocus();
+                        return;
+                    }
+                }
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(this, "Gagal memeriksa ID: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Simpan pelanggan baru dengan ID manual
+            String sql = "INSERT INTO pelanggan (id_pelanggan, nama_usaha, jenis_pelanggan, no_telepon, alamat_kirim) VALUES (?, ?, ?, ?, ?)";
             try (Connection conn = Koneksi.getKoneksi();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setString(1, nama);
-                ps.setString(2, jenis);
-                ps.setString(3, telp);
-                ps.setString(4, alamat);
+                ps.setInt(1, idInput);
+                ps.setString(2, nama);
+                ps.setString(3, jenis);
+                ps.setString(4, telp);
+                ps.setString(5, alamat);
                 ps.executeUpdate();
 
-                JOptionPane.showMessageDialog(this, "Pelanggan baru berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Pelanggan baru [ID: #" + idInput + "] " + nama + " berhasil ditambahkan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 loadDataPelanggan("");
-                btnResetActionPerformed(null);
+                resetFormKeModeBaru();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Gagal menambah pelanggan: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
             }
@@ -215,7 +280,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         // Tombol Ubah
         btnUbah.addActionListener(e -> {
             String idStr = txtIdPelanggan.getText().trim();
-            if (idStr.isEmpty()) {
+            if (idStr.isEmpty() || !isModeEdit) {
                 JOptionPane.showMessageDialog(this, "Pilih data pelanggan dari tabel terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -240,9 +305,9 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                 ps.setInt(5, Integer.parseInt(idStr));
                 ps.executeUpdate();
 
-                JOptionPane.showMessageDialog(this, "Data Pelanggan berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Data Pelanggan #" + idStr + " berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 loadDataPelanggan("");
-                btnResetActionPerformed(null);
+                resetFormKeModeBaru();
             } catch (SQLException ex) {
                 JOptionPane.showMessageDialog(this, "Gagal mengubah data: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
             }
@@ -251,14 +316,14 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         // Tombol Hapus
         btnHapus.addActionListener(e -> {
             String idStr = txtIdPelanggan.getText().trim();
-            if (idStr.isEmpty()) {
+            if (idStr.isEmpty() || !isModeEdit) {
                 JOptionPane.showMessageDialog(this, "Pilih data pelanggan dari tabel terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             int confirm = JOptionPane.showConfirmDialog(
                 this, 
-                "Apakah Anda yakin ingin menghapus data pelanggan ID: " + idStr + "?", 
+                "Apakah Anda yakin ingin menghapus data pelanggan ID #" + idStr + "?", 
                 "Konfirmasi Hapus", 
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE
@@ -271,11 +336,11 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                     ps.setInt(1, Integer.parseInt(idStr));
                     ps.executeUpdate();
 
-                    JOptionPane.showMessageDialog(this, "Data Pelanggan berhasil dihapus!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Data Pelanggan #" + idStr + " berhasil dihapus!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                     loadDataPelanggan("");
-                    btnResetActionPerformed(null);
+                    resetFormKeModeBaru();
                 } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(this, "Gagal menghapus data (Pelanggan sedang terkait dengan transaksi pesanan): " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Gagal menghapus data (Pelanggan sedang terkait dengan transaksi pesanan): " + ex.getMessage(), "Proteksi Relasi", JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
@@ -318,7 +383,6 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         tblPelanggan.getColumnModel().getColumn(2).setPreferredWidth(85);
         tblPelanggan.getColumnModel().getColumn(3).setPreferredWidth(95);
 
-        // Kolom 0: ID
         tblPelanggan.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -329,7 +393,6 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         });
 
-        // Kolom 1: Nama Usaha + Alamat Kirim
         tblPelanggan.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -346,10 +409,8 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         });
 
-        // Kolom 2: Badge Kapsul Jenis
         tblPelanggan.getColumnModel().getColumn(2).setCellRenderer(new JenisPillRenderer());
 
-        // Kolom 3: Kontak
         tblPelanggan.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -417,7 +478,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         panelSidebar = new javax.swing.JPanel();
@@ -458,7 +519,6 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Kelola Data Pelanggan");
-        setPreferredSize(new java.awt.Dimension(1080, 680));
         setResizable(false);
 
         panelSidebar.setBackground(new java.awt.Color(22, 27, 34));
@@ -468,15 +528,15 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
         panelBadgeUser.setBackground(new java.awt.Color(33, 39, 50));
 
-        lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblDotStatus.setForeground(new java.awt.Color(34, 196, 95));
         lblDotStatus.setText("●");
 
-        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         lblRoleText.setForeground(new java.awt.Color(248, 248, 248));
         lblRoleText.setText("Staf Penjualan");
 
-        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10));
+        lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblWilayahText.setForeground(new java.awt.Color(134, 148, 160));
         lblWilayahText.setText("Samarinda Ulu");
 
@@ -520,7 +580,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         });
 
         btnNavPelanggan.setBackground(new java.awt.Color(234, 88, 12));
-        btnNavPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnNavPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnNavPelanggan.setForeground(new java.awt.Color(255, 255, 255));
         btnNavPelanggan.setText("Kelola Pelanggan");
         btnNavPelanggan.setBorderPainted(false);
@@ -537,6 +597,11 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         btnNavPesanan.setFocusPainted(false);
         btnNavPesanan.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnNavPesanan.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavPesanan.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavPesananActionPerformed(evt);
+            }
+        });
 
         btnNavStatus.setBackground(new java.awt.Color(22, 27, 34));
         btnNavStatus.setForeground(new java.awt.Color(134, 148, 160));
@@ -546,9 +611,14 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         btnNavStatus.setFocusPainted(false);
         btnNavStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnNavStatus.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavStatus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavStatusActionPerformed(evt);
+            }
+        });
 
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
-        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
         btnLogout.setText("Logout");
         btnLogout.setBorderPainted(false);
@@ -591,7 +661,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                 .addComponent(btnNavPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 199, Short.MAX_VALUE)
                 .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
@@ -600,61 +670,44 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
         panelKonten.setBackground(new java.awt.Color(248, 250, 252));
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24));
+        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
         lblHeaderTitle.setText("Kelola Data Pelanggan");
 
         panelFormCard.setBackground(new java.awt.Color(255, 255, 255));
-        panelFormCard.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
-        lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         lblFormTitle.setForeground(new java.awt.Color(15, 15, 23));
         lblFormTitle.setText("Form Data Mitra");
 
-        lblIdPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblIdPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblIdPelanggan.setForeground(new java.awt.Color(71, 85, 105));
         lblIdPelanggan.setText("ID Pelanggan");
 
-        txtIdPelanggan.setText("");
-        txtIdPelanggan.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtIdPelangganActionPerformed(evt);
-            }
-        });
-
-        lblNamaUsaha.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblNamaUsaha.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblNamaUsaha.setForeground(new java.awt.Color(71, 85, 105));
         lblNamaUsaha.setText("Nama Usaha (Toko / Kontraktor)");
 
-        txtNamaUsaha.setText("");
-
-        lblJenisPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblJenisPelanggan.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblJenisPelanggan.setForeground(new java.awt.Color(71, 85, 105));
         lblJenisPelanggan.setText("Jenis Pelanggan");
 
-        cmbJenis.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Toko Bangunan", "Kontraktor" }));
-
-        lblTelepon.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblTelepon.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblTelepon.setForeground(new java.awt.Color(71, 85, 105));
         lblTelepon.setText("No. Telepon Aktif");
 
-        txtTelepon.setText("");
-
-        lblAlamat.setFont(new java.awt.Font("Segoe UI", 1, 11));
+        lblAlamat.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblAlamat.setForeground(new java.awt.Color(71, 85, 105));
         lblAlamat.setText("Alamat Kirim Muatan Semen");
-
-        jScrollPaneAlamat.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
         txtAlamat.setColumns(20);
         txtAlamat.setLineWrap(true);
         txtAlamat.setRows(3);
-        txtAlamat.setText("");
         txtAlamat.setWrapStyleWord(true);
         jScrollPaneAlamat.setViewportView(txtAlamat);
 
         btnSimpan.setBackground(new java.awt.Color(234, 88, 12));
-        btnSimpan.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnSimpan.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnSimpan.setForeground(new java.awt.Color(255, 255, 255));
         btnSimpan.setText("Simpan");
         btnSimpan.setBorderPainted(false);
@@ -662,7 +715,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         btnSimpan.setFocusPainted(false);
 
         btnUbah.setBackground(new java.awt.Color(30, 37, 43));
-        btnUbah.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnUbah.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnUbah.setForeground(new java.awt.Color(255, 255, 255));
         btnUbah.setText("Ubah");
         btnUbah.setBorderPainted(false);
@@ -670,7 +723,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         btnUbah.setFocusPainted(false);
 
         btnHapus.setBackground(new java.awt.Color(254, 235, 235));
-        btnHapus.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnHapus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnHapus.setForeground(new java.awt.Color(234, 43, 43));
         btnHapus.setText("Hapus");
         btnHapus.setBorderPainted(false);
@@ -678,7 +731,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         btnHapus.setFocusPainted(false);
 
         btnReset.setBackground(new java.awt.Color(241, 245, 249));
-        btnReset.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnReset.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnReset.setForeground(new java.awt.Color(71, 85, 105));
         btnReset.setText("Kosongkan Form");
         btnReset.setBorderPainted(false);
@@ -753,13 +806,12 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         );
 
         panelTabelCard.setBackground(new java.awt.Color(255, 255, 255));
-        panelTabelCard.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
         txtCari.setForeground(new java.awt.Color(100, 130, 148));
         txtCari.setText("Cari nama toko / kontraktor...");
 
         btnCari.setBackground(new java.awt.Color(234, 88, 12));
-        btnCari.setFont(new java.awt.Font("Segoe UI", 1, 12));
+        btnCari.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnCari.setForeground(new java.awt.Color(255, 255, 255));
         btnCari.setText("Cari Data");
         btnCari.setBorderPainted(false);
@@ -769,7 +821,9 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         jScrollPaneTabel.setBorder(null);
 
         tblPelanggan.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
+            new Object [][] {
+
+            },
             new String [] {
                 "ID", "NAMA USAHA", "JENIS", "KONTAK"
             }
@@ -843,24 +897,28 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {                                           
+    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {
         new FormMenuStaf().setVisible(true);
         this.dispose();
-    }                                          
+    }
 
-    private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {                                         
-        txtIdPelanggan.setText("");
-        txtNamaUsaha.setText("");
-        cmbJenis.setSelectedIndex(0);
-        txtTelepon.setText("");
-        txtAlamat.setText("");
-        tblPelanggan.clearSelection();
-        txtNamaUsaha.requestFocus();
-    }                                        
+    private void btnNavPesananActionPerformed(java.awt.event.ActionEvent evt) {
+        new FormPencatatanPesanan().setVisible(true);
+        this.dispose();
+    }
 
-    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {                                          
+    private void btnNavStatusActionPerformed(java.awt.event.ActionEvent evt) {
+        new FormStatusPengiriman().setVisible(true);
+        this.dispose();
+    }
+
+    private void btnResetActionPerformed(java.awt.event.ActionEvent evt) {
+        resetFormKeModeBaru();
+    }
+
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Apakah Anda yakin ingin keluar?",
                 "Konfirmasi Logout",
@@ -870,10 +928,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             new FormLogin().setVisible(true);
             this.dispose();
         }
-    }                                         
-
-    private void txtIdPelangganActionPerformed(java.awt.event.ActionEvent evt) {                                               
-    }                                              
+    }
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
@@ -881,7 +936,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCari;
     private javax.swing.JButton btnHapus;
     private javax.swing.JButton btnLogout;
@@ -917,5 +972,5 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
     private javax.swing.JTextField txtIdPelanggan;
     private javax.swing.JTextField txtNamaUsaha;
     private javax.swing.JTextField txtTelepon;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
 }
