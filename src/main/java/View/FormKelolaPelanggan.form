@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<Form version="1.5" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
+<Form version="1.3" maxVersion="1.9" type="org.netbeans.modules.form.forminfo.JFrameFormInfo">
   <Properties>
     <Property name="defaultCloseOperation" type="int" value="3"/>
-    <Property name="title" type="java.lang.String" value="SLATE - Kelola Data Pelanggan"/>
+    <Property name="title" type="java.lang.String" value="Menu Staf Penjualan (Kelola Pelanggan)"/>
+    <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+      <Dimension value="[1120, 700]"/>
+    </Property>
     <Property name="resizable" type="boolean" value="false"/>
   </Properties>
   <SyntheticProperties>
@@ -20,7 +23,7 @@
     <AuxValue name="FormSettings_listenerGenerationStyle" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_variablesLocal" type="java.lang.Boolean" value="false"/>
     <AuxValue name="FormSettings_variablesModifier" type="java.lang.Integer" value="2"/>
-    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,2,117,0,0,4,14"/>
+    <AuxValue name="designerSize" type="java.awt.Dimension" value="-84,-19,0,5,115,114,0,18,106,97,118,97,46,97,119,116,46,68,105,109,101,110,115,105,111,110,65,-114,-39,-41,-84,95,68,20,2,0,2,73,0,6,104,101,105,103,104,116,73,0,5,119,105,100,116,104,120,112,0,0,2,-68,0,0,4,96"/>
   </AuxValues>
 
   <Layout class="org.netbeans.modules.form.compat2.layouts.DesignBorderLayout"/>
@@ -29,6 +32,12 @@
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="22" green="1b" red="16" type="rgb"/>
+        </Property>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[240, 32767]"/>
+        </Property>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[240, 680]"/>
         </Property>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[240, 680]"/>
@@ -65,7 +74,7 @@
                   <Component id="lblLogoSidebar" min="-2" pref="70" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                   <Component id="panelBadgeUser" min="-2" pref="46" max="-2" attributes="0"/>
-                  <EmptySpace min="-2" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                   <Component id="btnNavMenu" min="-2" pref="42" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                   <Component id="btnNavPelanggan" min="-2" pref="42" max="-2" attributes="0"/>
@@ -73,7 +82,7 @@
                   <Component id="btnNavPesanan" min="-2" pref="42" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
                   <Component id="btnNavStatus" min="-2" pref="42" max="-2" attributes="0"/>
-                  <EmptySpace pref="218" max="32767" attributes="0"/>
+                  <EmptySpace pref="204" max="32767" attributes="0"/>
                   <Component id="btnLogout" min="-2" pref="42" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
               </Group>
@@ -236,7 +245,7 @@
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="a0" green="94" red="86" type="rgb"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Pembaruan Status Pengiriman"/>
+            <Property name="text" type="java.lang.String" value="Status Pengiriman"/>
             <Property name="borderPainted" type="boolean" value="false"/>
             <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
               <Color id="Hand Cursor"/>
@@ -262,7 +271,7 @@
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="44" green="44" red="ef" type="rgb"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Logout"/>
+            <Property name="text" type="java.lang.String" value="KELUAR"/>
             <Property name="borderPainted" type="boolean" value="false"/>
             <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
               <Color id="Hand Cursor"/>
@@ -278,7 +287,7 @@
     <Container class="javax.swing.JPanel" name="panelKonten">
       <Properties>
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-          <Color blue="fc" green="fa" red="f8" type="rgb"/>
+          <Color blue="ff" green="ff" red="ff" type="rgb"/>
         </Property>
       </Properties>
       <Constraints>
@@ -291,16 +300,16 @@
         <DimensionLayout dim="0">
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
-                  <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
+                  <EmptySpace min="-2" pref="30" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="lblHeaderTitle" min="-2" pref="400" max="-2" attributes="0"/>
-                      <Group type="102" attributes="0">
-                          <Component id="panelFormCard" min="-2" max="-2" attributes="0"/>
+                      <Component id="lblJudulHalaman" min="-2" pref="600" max="-2" attributes="0"/>
+                      <Group type="102" alignment="0" attributes="0">
+                          <Component id="panelCardForm" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                          <Component id="panelTabelCard" min="-2" max="-2" attributes="0"/>
+                          <Component id="panelCardTabel" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="30" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
@@ -308,30 +317,30 @@
           <Group type="103" groupAlignment="0" attributes="0">
               <Group type="102" alignment="0" attributes="0">
                   <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
-                  <Component id="lblHeaderTitle" min="-2" pref="35" max="-2" attributes="0"/>
+                  <Component id="lblJudulHalaman" min="-2" pref="35" max="-2" attributes="0"/>
                   <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                      <Component id="panelFormCard" max="32767" attributes="0"/>
-                      <Component id="panelTabelCard" max="32767" attributes="0"/>
+                      <Component id="panelCardForm" max="32767" attributes="0"/>
+                      <Component id="panelCardTabel" min="-2" max="-2" attributes="0"/>
                   </Group>
-                  <EmptySpace max="32767" attributes="0"/>
+                  <EmptySpace pref="35" max="32767" attributes="0"/>
               </Group>
           </Group>
         </DimensionLayout>
       </Layout>
       <SubComponents>
-        <Component class="javax.swing.JLabel" name="lblHeaderTitle">
+        <Component class="javax.swing.JLabel" name="lblJudulHalaman">
           <Properties>
             <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
               <Font name="Segoe UI" size="24" style="1"/>
             </Property>
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-              <Color blue="17" green="f" red="f" type="rgb"/>
+              <Color blue="17" green="17" red="f" type="rgb"/>
             </Property>
             <Property name="text" type="java.lang.String" value="Kelola Data Pelanggan"/>
           </Properties>
         </Component>
-        <Container class="javax.swing.JPanel" name="panelFormCard">
+        <Container class="javax.swing.JPanel" name="panelCardForm">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -344,76 +353,76 @@
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="lblFormTitle" min="-2" max="-2" attributes="0"/>
+                          <Component id="lblJudulForm" min="-2" max="-2" attributes="0"/>
                           <Component id="lblIdPelanggan" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtIdPelanggan" pref="305" max="32767" attributes="0"/>
+                          <Component id="txtIdPelanggan" pref="280" max="32767" attributes="0"/>
                           <Component id="lblNamaUsaha" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtNamaUsaha" pref="305" max="32767" attributes="0"/>
+                          <Component id="txtNamaUsaha" pref="280" max="32767" attributes="0"/>
                           <Component id="lblJenisPelanggan" min="-2" max="-2" attributes="0"/>
-                          <Component id="cmbJenis" pref="305" max="32767" attributes="0"/>
+                          <Component id="cmbJenisPelanggan" pref="280" max="32767" attributes="0"/>
                           <Component id="lblTelepon" min="-2" max="-2" attributes="0"/>
-                          <Component id="txtTelepon" pref="305" max="32767" attributes="0"/>
+                          <Component id="txtTelepon" pref="280" max="32767" attributes="0"/>
                           <Component id="lblAlamat" min="-2" max="-2" attributes="0"/>
-                          <Component id="jScrollPaneAlamat" pref="305" max="32767" attributes="0"/>
+                          <Component id="jScrollPaneAlamat" pref="280" max="32767" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="btnSimpan" min="-2" pref="90" max="-2" attributes="0"/>
+                              <Component id="btnSimpan" min="-2" pref="88" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-                              <Component id="btnUbah" min="-2" pref="90" max="-2" attributes="0"/>
+                              <Component id="btnUbah" min="-2" pref="88" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-                              <Component id="btnHapus" pref="109" max="32767" attributes="0"/>
+                              <Component id="btnHapus" pref="88" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="btnReset" alignment="0" pref="305" max="32767" attributes="0"/>
+                          <Component id="btnKosongkan" pref="280" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="18" max="32767" attributes="0"/>
+                      <EmptySpace pref="20" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-                      <Component id="lblFormTitle" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="15" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <Component id="lblJudulForm" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
                       <Component id="lblIdPelanggan" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                       <Component id="txtIdPelanggan" min="-2" pref="36" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                       <Component id="lblNamaUsaha" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                       <Component id="txtNamaUsaha" min="-2" pref="36" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                       <Component id="lblJenisPelanggan" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                      <Component id="cmbJenis" min="-2" pref="36" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                      <Component id="cmbJenisPelanggan" min="-2" pref="36" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                       <Component id="lblTelepon" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                       <Component id="txtTelepon" min="-2" pref="36" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
                       <Component id="lblAlamat" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                      <Component id="jScrollPaneAlamat" min="-2" pref="60" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
+                      <Component id="jScrollPaneAlamat" min="-2" pref="80" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="btnSimpan" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
                           <Component id="btnUbah" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
                           <Component id="btnHapus" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                      <Component id="btnReset" min="-2" pref="36" max="-2" attributes="0"/>
-                      <EmptySpace pref="23" max="32767" attributes="0"/>
+                      <Component id="btnKosongkan" min="-2" pref="36" max="-2" attributes="0"/>
+                      <EmptySpace max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="lblFormTitle">
+            <Component class="javax.swing.JLabel" name="lblJudulForm">
               <Properties>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Segoe UI" size="14" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="17" green="f" red="f" type="rgb"/>
+                  <Color blue="17" green="17" red="f" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Form Data Mitra"/>
               </Properties>
@@ -424,12 +433,18 @@
                   <Font name="Segoe UI" size="11" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="69" green="55" red="47" type="rgb"/>
+                  <Color blue="3a" green="31" red="27" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="ID Pelanggan"/>
               </Properties>
             </Component>
             <Component class="javax.swing.JTextField" name="txtIdPelanggan">
+              <Properties>
+                <Property name="editable" type="boolean" value="false"/>
+                <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="fb" green="fa" red="f8" type="rgb"/>
+                </Property>
+              </Properties>
             </Component>
             <Component class="javax.swing.JLabel" name="lblNamaUsaha">
               <Properties>
@@ -437,7 +452,7 @@
                   <Font name="Segoe UI" size="11" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="69" green="55" red="47" type="rgb"/>
+                  <Color blue="3a" green="31" red="27" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Nama Usaha (Toko / Kontraktor)"/>
               </Properties>
@@ -450,12 +465,20 @@
                   <Font name="Segoe UI" size="11" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="69" green="55" red="47" type="rgb"/>
+                  <Color blue="3a" green="31" red="27" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Jenis Pelanggan"/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JComboBox" name="cmbJenis">
+            <Component class="javax.swing.JComboBox" name="cmbJenisPelanggan">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="2">
+                    <StringItem index="0" value="Toko Bangunan"/>
+                    <StringItem index="1" value="Kontraktor"/>
+                  </StringArray>
+                </Property>
+              </Properties>
               <AuxValues>
                 <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
               </AuxValues>
@@ -466,7 +489,7 @@
                   <Font name="Segoe UI" size="11" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="69" green="55" red="47" type="rgb"/>
+                  <Color blue="3a" green="31" red="27" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="No. Telepon Aktif"/>
               </Properties>
@@ -479,7 +502,7 @@
                   <Font name="Segoe UI" size="11" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="69" green="55" red="47" type="rgb"/>
+                  <Color blue="3a" green="31" red="27" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Alamat Kirim Muatan Semen"/>
               </Properties>
@@ -519,6 +542,9 @@
                 </Property>
                 <Property name="focusPainted" type="boolean" value="false"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnSimpanActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnUbah">
               <Properties>
@@ -538,17 +564,20 @@
                 </Property>
                 <Property name="focusPainted" type="boolean" value="false"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnUbahActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnHapus">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="eb" green="eb" red="fe" type="rgb"/>
+                  <Color blue="db" green="dc" red="fe" type="rgb"/>
                 </Property>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Segoe UI" size="12" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="2b" green="2b" red="ea" type="rgb"/>
+                  <Color blue="26" green="26" red="dc" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Hapus"/>
                 <Property name="borderPainted" type="boolean" value="false"/>
@@ -557,17 +586,20 @@
                 </Property>
                 <Property name="focusPainted" type="boolean" value="false"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnHapusActionPerformed"/>
+              </Events>
             </Component>
-            <Component class="javax.swing.JButton" name="btnReset">
+            <Component class="javax.swing.JButton" name="btnKosongkan">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="f9" green="f5" red="f1" type="rgb"/>
+                  <Color blue="f7" green="f1" red="eb" type="rgb"/>
                 </Property>
                 <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
                   <Font name="Segoe UI" size="12" style="1"/>
                 </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="69" green="55" red="47" type="rgb"/>
+                  <Color blue="58" green="46" red="3b" type="rgb"/>
                 </Property>
                 <Property name="text" type="java.lang.String" value="Kosongkan Form"/>
                 <Property name="borderPainted" type="boolean" value="false"/>
@@ -577,12 +609,12 @@
                 <Property name="focusPainted" type="boolean" value="false"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnResetActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnKosongkanActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
         </Container>
-        <Container class="javax.swing.JPanel" name="panelTabelCard">
+        <Container class="javax.swing.JPanel" name="panelCardTabel">
           <Properties>
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -596,27 +628,30 @@
                       <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Group type="102" attributes="0">
-                              <Component id="txtCari" min="-2" pref="250" max="-2" attributes="0"/>
+                              <Component id="txtCari" min="-2" pref="210" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
-                              <Component id="btnCari" pref="107" max="32767" attributes="0"/>
+                              <Component id="cmbFilterJenis" min="-2" pref="120" max="-2" attributes="0"/>
+                              <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
+                              <Component id="btnCariData" pref="114" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="jScrollPaneTabel" pref="365" max="32767" attributes="0"/>
+                          <Component id="jScrollPaneTabel" max="32767" attributes="0"/>
                       </Group>
-                      <EmptySpace pref="18" max="32767" attributes="0"/>
+                      <EmptySpace pref="20" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
-                          <Component id="txtCari" alignment="3" min="-2" pref="38" max="-2" attributes="0"/>
-                          <Component id="btnCari" alignment="3" min="-2" pref="38" max="-2" attributes="0"/>
+                          <Component id="txtCari" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
+                          <Component id="cmbFilterJenis" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
+                          <Component id="btnCariData" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
-                      <Component id="jScrollPaneTabel" min="-2" pref="460" max="-2" attributes="0"/>
-                      <EmptySpace pref="17" max="32767" attributes="0"/>
+                      <EmptySpace min="-2" pref="14" max="-2" attributes="0"/>
+                      <Component id="jScrollPaneTabel" pref="466" max="32767" attributes="0"/>
+                      <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -624,13 +659,27 @@
           <SubComponents>
             <Component class="javax.swing.JTextField" name="txtCari">
               <Properties>
-                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                  <Color blue="94" green="82" red="64" type="rgb"/>
-                </Property>
                 <Property name="text" type="java.lang.String" value="Cari nama toko / kontraktor..."/>
               </Properties>
             </Component>
-            <Component class="javax.swing.JButton" name="btnCari">
+            <Component class="javax.swing.JComboBox" name="cmbFilterJenis">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="3">
+                    <StringItem index="0" value="Semua Jenis"/>
+                    <StringItem index="1" value="Toko"/>
+                    <StringItem index="2" value="Kontraktor"/>
+                  </StringArray>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="cmbFilterJenisActionPerformed"/>
+              </Events>
+              <AuxValues>
+                <AuxValue name="JavaCodeGenerator_TypeParameters" type="java.lang.String" value="&lt;String&gt;"/>
+              </AuxValues>
+            </Component>
+            <Component class="javax.swing.JButton" name="btnCariData">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="c" green="58" red="ea" type="rgb"/>
@@ -648,9 +697,15 @@
                 </Property>
                 <Property name="focusPainted" type="boolean" value="false"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCariDataActionPerformed"/>
+              </Events>
             </Component>
             <Container class="javax.swing.JScrollPane" name="jScrollPaneTabel">
               <Properties>
+                <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                </Property>
                 <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
                   <Border info="null"/>
                 </Property>
@@ -664,16 +719,20 @@
                 <Component class="javax.swing.JTable" name="tblPelanggan">
                   <Properties>
                     <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
-                      <Table columnCount="4" rowCount="0">
+                      <Table columnCount="5" rowCount="0">
                         <Column editable="false" title="ID" type="java.lang.Object"/>
                         <Column editable="false" title="NAMA USAHA" type="java.lang.Object"/>
                         <Column editable="false" title="JENIS" type="java.lang.Object"/>
                         <Column editable="false" title="KONTAK" type="java.lang.Object"/>
+                        <Column editable="false" title="ALAMAT" type="java.lang.Object"/>
                       </Table>
                     </Property>
-                    <Property name="rowHeight" type="int" value="68"/>
+                    <Property name="rowHeight" type="int" value="54"/>
                     <Property name="selectionBackground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
-                      <Color blue="f8" green="f8" red="f8" type="rgb"/>
+                      <Color blue="f7" green="f1" red="eb" type="rgb"/>
+                    </Property>
+                    <Property name="selectionForeground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                      <Color blue="26" green="1f" red="1a" type="rgb"/>
                     </Property>
                     <Property name="showGrid" type="boolean" value="false"/>
                   </Properties>

@@ -4,15 +4,21 @@
  */
 package Service;
 import Model.Semen;
-import Model.SemenDAO;
+import dao.SemenDAO;
 import java.sql.SQLException;
 import java.util.List;
+import dao.SemenDAOInterface;
 /**
  *
  * @author LOQ
  */
 public class SemenService {
-    private final SemenDAO semenDAO = new SemenDAO();
+    // Abstraction: mengacu pada interface
+    private final SemenDAOInterface semenDAO;
+
+    public SemenService() {
+        this.semenDAO = new SemenDAO();
+    }
 
     public List<Semen> getAllSemen() throws SQLException {
         return semenDAO.getAll();
@@ -37,7 +43,7 @@ public class SemenService {
     public boolean hapusSemen(int id) throws SQLException {
         return semenDAO.delete(id);
     }
-    
+
     public boolean catatPasokanMasuk(int idSemen, String batch, int jumlah, int idAdmin) throws SQLException {
         return semenDAO.catatPasokanMasuk(idSemen, batch, jumlah, idAdmin);
     }

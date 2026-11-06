@@ -4,7 +4,7 @@
  */
 package Controller;
 import Model.Pengguna;
-import Model.PenggunaDAO;
+import dao.PenggunaDAO;
 import Model.Semen;
 import Service.PelangganService;
 import Service.PesananService;

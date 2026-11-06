@@ -1,7 +1,7 @@
 package view;
 
 import Model.Pengguna;
-import Model.PenggunaDAO;
+import dao.PenggunaDAO;
 import Util.SesiPengguna;
 import java.awt.Color;
 import java.awt.Font;

@@ -4,7 +4,7 @@
  */
 package Service;
 import Model.Pelanggan;
-import Model.PelangganDAO;
+import dao.PelangganDAO;
 import java.sql.SQLException;
 import java.util.List;
 /**

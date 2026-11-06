@@ -29,7 +29,7 @@ public class View {
         System.out.println("------------------------------------------------------------------------------------");
         for (Pelanggan p : list) {
             System.out.printf("%-4d %-30s %-15s %-40s %-15s%n",
-                    p.getIdPelanggan(), p.getNamaUsaha(), p.getJenisPelanggan(), p.getAlamatKirim(), p.getNoTelepon());
+                    p.getIdPelanggan(), p.getNamaUsaha(), p.getJenisPelanggan(), p.getAlamat(), p.getNomorTelepon());
         }
         System.out.println("------------------------------------------------------------------------------------\n");
     }

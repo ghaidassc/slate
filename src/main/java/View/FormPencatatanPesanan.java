@@ -86,9 +86,10 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
     public FormPencatatanPesanan() {
         initComponents();
         this.setSize(1080, 680);
+        this.setPreferredSize(new java.awt.Dimension(1100, 720));
+        this.setMinimumSize(new java.awt.Dimension(1100, 720));
+        this.pack(); // Mengunci tata letak border layout agar sidebar dan konten tampil bersamaan
         this.setLocationRelativeTo(null);
-        rapikanTampilan();
-        pasangLogoSidebar();
 
         // 1. Tampilkan data staf yang login
         try {
@@ -590,7 +591,7 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
         btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
-        btnLogout.setText("Logout");
+        btnLogout.setText("KELUAR");
         btnLogout.setBorderPainted(false);
         btnLogout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnLogout.setFocusPainted(false);
@@ -996,7 +997,6 @@ public class FormPencatatanPesanan extends javax.swing.JFrame {
 
         getContentPane().add(panelKonten, java.awt.BorderLayout.CENTER);
 
-        pack();
         setLocationRelativeTo(null);
     }// </editor-fold>                        
 
