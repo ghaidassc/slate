@@ -164,12 +164,11 @@ ERD (Entity Relationship Diagram) adalah diagram yang menggambarkan struktur dat
 
 ## Struktur Folder/Package
 
+Project disusun dalam beberapa lapisan agar tanggung jawab tiap bagian terpisah, yaitu tampilan, logika bisnis, akses data, dan model data. Alur pemanggilan umumnya adalah `View → Service → DAO → Koneksi → MySQL`. Pada beberapa form, operasi sederhana memanggil DAO secara langsung.
+
 <img width="438" height="534" alt="Screenshot 2026-11-07 165838" src="https://github.com/user-attachments/assets/bbe21fb9-9e6b-4313-bc51-69efffbd2d65" />
 
-
 <img width="422" height="514" alt="Screenshot 2026-11-07 165857" src="https://github.com/user-attachments/assets/cd849bfd-1e1c-4b75-be9c-9270f6380b37" />
-
-Project disusun dalam beberapa lapisan agar tanggung jawab tiap bagian terpisah, yaitu tampilan, logika bisnis, akses data, dan model data. Alur pemanggilan umumnya adalah `View → Service → DAO → Koneksi → MySQL`. Pada beberapa form, operasi sederhana memanggil DAO secara langsung.
 
 - **`Config`**
   - `Koneksi.java`: mengatur koneksi JDBC ke MySQL (URL, user, dan password) dan menyediakan koneksi untuk seluruh DAO.
