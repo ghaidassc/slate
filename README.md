@@ -55,6 +55,10 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 ## Struktur Folder/Package
 
+<img width="438" height="534" alt="Screenshot 2026-11-07 165838" src="https://github.com/user-attachments/assets/bbe21fb9-9e6b-4313-bc51-69efffbd2d65" />
+
+<img width="422" height="514" alt="Screenshot 2026-11-07 165857" src="https://github.com/user-attachments/assets/cd849bfd-1e1c-4b75-be9c-9270f6380b37" />
+
 
 ## Penerapan 4 Pilar OOP
 
