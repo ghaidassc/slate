@@ -83,13 +83,11 @@ Atribut pada class `Pengguna` (`idPengguna`, `namaPengguna`, `sandiPengguna`, `n
 
 ### Persiapan
 
-1. Pasang **JDK**, **Apache NetBeans**, dan **XAMPP** (MySQL).
+1. Siapkan **Apache NetBeans**, dan **Laragon** (MySQL).
 2. Jalankan MySQL dari Laragon, lalu buka phpMyAdmin.
 3. Buat database bernama `slate_fix` (sesuai `Config/Koneksi.java`), lalu **Import** berkas `database/slate.sql`.
 4. Clone repository ini, lalu buka sebagai project di NetBeans.
-5. Klik kanan project, pilih **Reload POM** agar Maven mengunduh `mysql-connector-j`, lalu **Clean and Build**.
-6. Jika pengaturan MySQL berbeda, sesuaikan `URL`, `USER`, dan `PASS` di `Config/Koneksi.java`.
-7. Jalankan program dengan menjalankan class `Main.Slate` (atau `view.FormLogin`).
+5. Jalankan program dengan menjalankan class `Main.Slate` (atau `view.FormLogin`).
 
 ### Akun Contoh
 
