@@ -121,25 +121,25 @@ Daftarkan varian semen baru, atau pilih ID semen yang ingin dihapus dan konfirma
 
 **6. Menu Staf Penjualan**
 
-![Menu Staf Penjualan](docs/screenshots/06-menu-staf.png)
+<img width="1370" height="848" alt="image" src="https://github.com/user-attachments/assets/308968e2-16aa-49d5-8061-99cbe8287a56" />
 
 Menampilkan rekap pesanan dan menu menuju kelola pelanggan, pencatatan pesanan, dan pembaruan status.
 
 **7. Kelola Data Pelanggan**
 
-![Kelola Data Pelanggan](docs/screenshots/07-kelola-pelanggan.png)
+<img width="1367" height="848" alt="image" src="https://github.com/user-attachments/assets/ace96dbf-8f45-4562-9796-85fe2ad1451b" />
 
 Tambah pelanggan baru, cari berdasarkan nama toko atau kontraktor, serta ubah atau hapus data yang dipilih dari tabel.
 
 **8. Pencatatan Pesanan**
 
-![Pencatatan Pesanan](docs/screenshots/08-pencatatan-pesanan.png)
+<img width="1364" height="843" alt="image" src="https://github.com/user-attachments/assets/97bd89bc-82c1-498a-9a33-c25e6e042c45" />
 
 Pilih pelanggan, tambahkan satu atau beberapa jenis semen beserta jumlahnya, pilih metode dan status pembayaran, lalu catat pesanan. Sistem menolak item yang melebihi stok.
 
 **9. Pembaruan Status Pembayaran/Pengiriman**
 
-![Pembaruan Status](docs/screenshots/09-status-pengiriman.png)
+<img width="1368" height="844" alt="image" src="https://github.com/user-attachments/assets/52d28539-651c-411b-8cd4-b207f88f4fd3" />
 
 Pilih pesanan dari tabel, ubah status pembayaran atau pengiriman, lalu simpan. Status **Refund** memulihkan stok pesanan secara otomatis.
 
