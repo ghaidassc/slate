@@ -62,7 +62,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 
   <p align="justify">Setelah login berhasil, sistem mengambil data pesanan dari database dan menampilkan riwayat serta rekap pesanan. Staf Penjualan dapat memilih menu Kelola Data Pelanggan, Pencatatan Pesanan, atau Pembaruan Status Pembayaran/Pengiriman. Setiap menu akan mengarahkan pengguna ke fitur yang sesuai. Jika memilih keluar, sistem meminta konfirmasi sebelum kembali ke halaman login.</p>
-<details>
+</details>
 
 <details>
   <summary>Fitur Kelola Data Pelanggan-Staf Penjualan</summary>
