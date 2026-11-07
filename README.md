@@ -51,12 +51,11 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 ### Use Case
 
 <details>
-  <summary>Use Case SLATE</summary>
-  <img width="2488" height="1968" alt="Flowchart SLATE" src="<img width="2152" height="1817" alt=<img width="2152" height="1817" alt="Untitled Diagram drawio (8)" src="https://github.com/user-attachments/assets/51d5afab-ceae-4ae5-998a-391caa700683" />
-/>
-" />
+  <summary>USE CASE SLATE</summary>
+  <img width="2152" height="1817" alt="Untitled Diagram drawio (8)" src="https://github.com/user-attachments/assets/d4984b54-f2d5-4a0e-9622-35ebeeec23c6" />
 
-  <p align="justify">[Penjelasan alur utama program dari awal hingga akhir.]</p>
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
 </details>
 
 ### ERD
