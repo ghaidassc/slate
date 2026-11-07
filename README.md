@@ -60,6 +60,22 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 ### ERD
 
+<details>
+  <summary>Logical</summary>
+  <img width="1407" height="842" alt="Slate Logical" src="https://github.com/user-attachments/assets/bd6b1874-6ee8-4f24-a64a-3e4ee97dcacc" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Relational</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
 
 ## Struktur Folder/Package
 
