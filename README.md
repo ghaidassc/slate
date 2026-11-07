@@ -97,19 +97,19 @@ Masukkan nama pengguna dan sandi, pilih hak akses, lalu tekan **LOGIN**.
 
 **2. Menu Admin Gudang**
 
-![Menu Admin Gudang](docs/screenshots/02-menu-admin.png)
+<img width="1365" height="847" alt="image" src="https://github.com/user-attachments/assets/0863644b-9697-4f4b-a6f6-180c40847c1f" />
 
 Menampilkan daftar semen beserta status stok. Baris berstatus **Kritis** menandakan stok sudah di bawah atau sama dengan batas aman.
 
 **3. Tambah Stok Semen**
 
-![Tambah Stok Semen](docs/screenshots/03-tambah-stok.png)
+<img width="1370" height="846" alt="image" src="https://github.com/user-attachments/assets/6dcf8906-6ce4-481b-a592-0e7681ebdd12" />
 
 Pilih varian semen, isi nomor batch dan jumlah pasokan, lalu simpan. Stok di database bertambah otomatis dan riwayat pasokan tampil di tabel.
 
 **4. Ubah Data Semen**
 
-![Ubah Data Semen](docs/screenshots/04-ubah-data-semen.png)
+<img width="1364" height="849" alt="image" src="https://github.com/user-attachments/assets/8ff7a43e-568d-46e0-a229-41ac30087988" />
 
 Pilih ID semen, ubah nama, satuan, harga jual, atau batas aman, lalu simpan.
 
