@@ -29,18 +29,19 @@ SLATE adalah sistem berbasis Java untuk mengelola operasional sebuah perusahaan 
 
 ## Tech Stack
 
+SLATE dikembangkan menggunakan Java sebagai bahasa pemrograman utama. Sistem ini menggunakan Java Swing untuk membangun tampilan antarmuka, serta MySQL untuk menyimpan dan mengelola data pelanggan, pesanan, pembayaran, dan persediaan semen.
+
 | Komponen | Teknologi |
 |---|---|
-| Bahasa | Java |
-| Antarmuka | Java Swing (NetBeans GUI Builder) |
-| Database | MySQL 8.0 (dikelola lewat Laragon dan phpMyAdmin) |
-| Konektivitas | JDBC |
-| Build tool | Apache Maven |
-| Library | `mysql-connector-j` 8.3.0, `exec-maven-plugin` 3.1.0 |
+| Bahasa Pemrograman | Java |
+| Antarmuka | Java Swing |
+| Database | MySQL 8.0 |
+| Koneksi Database | JDBC |
+| Build Tool | Apache Maven |
+| Library | MySQL Connector/J 8.3.0, Exec Maven Plugin 3.1.0 |
 | IDE | Apache NetBeans |
 
-Aplikasi tidak memakai framework web. Seluruh antarmuka dibangun dengan Swing/AWT bawaan JDK.
-
+Aplikasi SLATE berbentuk desktop dan tidak menggunakan framework web. Seluruh tampilan program dibuat menggunakan Java Swing, dengan database MySQL sebagai tempat penyimpanan data.
 ## Perancangan Sistem
 
 ### Flowchart
