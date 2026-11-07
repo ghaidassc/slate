@@ -52,7 +52,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="1097" height="1012" alt="FlowchartSLATE (2)-Halaman Login drawio" src="https://github.com/user-attachments/assets/606618d5-662a-4140-9344-95fcd2c34d6d" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Alur sistem dimulai ketika pengguna memasukkan username dan password pada halaman login. Sistem kemudian memvalidasi data tersebut dengan database. Jika data sesuai, pengguna diarahkan ke halaman berdasarkan role, yaitu Admin Gudang atau Staf Penjualan. Jika data tidak sesuai, sistem menampilkan pesan kesalahan dan meminta pengguna login kembali.</p>
 </details>
 
 <details>
@@ -60,15 +60,14 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="1849" height="561" alt="FlowchartSLATE (2)-Halaman Menu Staf Penjualan drawio" src="https://github.com/user-attachments/assets/af5c4e6c-7ea1-4f41-b081-7dfd3cb42cbb" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
-</details>
+  <p align="justify">Setelah login berhasil, sistem mengambil data pesanan dari database dan menampilkan riwayat serta rekap pesanan. Staf Penjualan dapat memilih menu Kelola Data Pelanggan, Pencatatan Pesanan, atau Pembaruan Status Pembayaran/Pengiriman. Setiap menu akan mengarahkan pengguna ke fitur yang sesuai. Jika memilih keluar, sistem meminta konfirmasi sebelum kembali ke halaman login.
 
 <details>
   <summary>Fitur Kelola Data Pelanggan-Staf Penjualan</summary>
   <img width="2467" height="1822" alt="FlowchartSLATE (2)-Fitur Kelola Data Pelanggan-Staf Penjualan drawio" src="https://github.com/user-attachments/assets/5ced0fa6-b1ba-449e-9de1-2da32c7f5f78" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Pada fitur ini, sistem menampilkan daftar pelanggan yang tersimpan dalam database. Staf Penjualan dapat menambahkan pelanggan baru, mencari pelanggan berdasarkan nama toko atau kontraktor, serta mengubah dan menghapus data pelanggan. Setiap proses perubahan dilakukan melalui validasi data dan konfirmasi untuk menghindari kesalahan. Setelah proses selesai, sistem kembali ke halaman pengelolaan pelanggan.</p>
 </details>
 
 <details>
@@ -76,7 +75,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="767" height="2481" alt="FlowchartSLATE (2)-Fitur Pencatatan Pesanan-Staf Penjualan drawio" src="https://github.com/user-attachments/assets/4c61424a-ceac-4538-accf-128b0bdf83fb" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Proses pencatatan pesanan dimulai dengan menampilkan data pelanggan yang tersedia. Staf Penjualan memilih pelanggan dan memasukkan pesanan semen, kemudian sistem memvalidasi data pelanggan serta ketersediaan stok. Jika stok mencukupi, sistem menghitung total tagihan dan memeriksa status pembayaran. Pesanan yang telah lunas akan diproses dan stok dikurangi, sedangkan pesanan yang belum lunas menunggu pembayaran atau dibatalkan.</p>
 </details>
 
 <details>
@@ -84,7 +83,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="1642" height="1282" alt="FlowchartSLATE (2)-Fitur Pembaruan Status Pengiriman-Staf Penjualan drawio" src="https://github.com/user-attachments/assets/f0f8bc8f-311c-4bea-8317-b731b19d5ae8" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Staf Penjualan memasukkan ID pesanan yang ingin diperbarui, kemudian sistem memvalidasi keberadaan pesanan tersebut di database. Setelah data sesuai, staf dapat memilih untuk memperbarui status pembayaran atau status pengiriman. Pembayaran yang telah lunas akan memicu pemotongan stok apabila belum dilakukan sebelumnya. Jika pesanan dibatalkan, sistem mengembalikan stok semen dan membatalkan proses pengiriman.</p>
 </details>
 
 <details>
@@ -92,7 +91,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="2037" height="449" alt="FlowchartSLATE (2)-Halaman Menu Admin Gudang drawio" src="https://github.com/user-attachments/assets/1f30be22-4cc3-475f-8921-1e33a56ec8cb" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Setelah login, sistem mengambil data persediaan semen dari database dan menampilkan daftar semen beserta pilihan menu yang tersedia. Admin Gudang dapat memilih fitur Tambah Stok Semen, Ubah Data Semen, atau Tambah/Hapus Semen sesuai kebutuhan. Setiap fitur digunakan untuk mengelola persediaan dan informasi produk. Jika admin memilih keluar, sistem meminta konfirmasi sebelum kembali ke halaman login.</p>
 </details>
 
 <details>
@@ -100,7 +99,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="699" height="816" alt="FlowchartSLATE (2)-Fitur Tambah Stok Semen-Admin Gudang drawio" src="https://github.com/user-attachments/assets/3971a976-8e88-4dab-b921-eaf972693bbc" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Admin Gudang memasukkan jumlah stok semen yang ingin ditambahkan ke dalam sistem. Sistem kemudian memvalidasi nominal yang dimasukkan untuk memastikan jumlah stok sesuai. Jika input tidak valid, sistem menampilkan pesan kesalahan dan meminta admin mengulangi input. Jika valid, stok disimpan ke database dan sistem menampilkan pemberitahuan bahwa penambahan stok berhasil.</p>
 </details>
 
 <details>
@@ -108,7 +107,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="504" height="1712" alt="FlowchartSLATE (2)-Fitur Ubah Data Semen-Admin Gudang drawio" src="https://github.com/user-attachments/assets/73fe969d-c5da-4094-b2e9-79a188e5a324" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Admin Gudang memilih ID semen yang ingin diperbarui, kemudian sistem memeriksa keberadaan data tersebut di database. Jika data ditemukan, admin dapat memasukkan informasi baru seperti harga jual dan detail semen. Sistem memvalidasi data yang dimasukkan sebelum meminta konfirmasi perubahan. Setelah perubahan dikonfirmasi, data diperbarui di database dan sistem menampilkan pemberitahuan keberhasilan.</p>
 </details>
 
 <details>
@@ -116,7 +115,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="1372" height="1557" alt="FlowchartSLATE (2)-Fitur Tambah_Hapus Semen-Admin Gudang drawio" src="https://github.com/user-attachments/assets/284d3963-37d2-46d4-abb4-bf07473707be" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Pada fitur ini, Admin Gudang dapat memilih untuk menambahkan jenis semen baru atau menghapus data semen yang tersedia. Penambahan dilakukan dengan memasukkan nama semen, satuan, harga jual, stok, dan batas aman yang kemudian divalidasi oleh sistem. Untuk penghapusan, admin memasukkan ID semen yang ingin dihapus dan melakukan konfirmasi. Setelah proses berhasil, sistem menyimpan perubahan ke database dan kembali ke halaman Admin Gudang.</p>
 </details>
 
 ### Use Case
