@@ -46,19 +46,37 @@ public class FormMenuStaf extends javax.swing.JFrame {
         rapikanGayaKomponen();
         pasangLogoSidebar();
 
-        try {
-            Pengguna currentUser = SesiPengguna.getPengguna();
-            if (currentUser instanceof StafPenjualan) {
-                StafPenjualan staf = (StafPenjualan) currentUser;
-                lblRoleText.setText(staf.getNamaLengkap());
-                lblWilayahText.setText(staf.getWilayahPenjualan());
-            }
-        } catch (Exception ignored) {}
+        tampilkanSesiPengguna();
 
         modelTabel = (DefaultTableModel) tblRiwayat.getModel();
         desainTabelDanBadge();
         muatStatistikDashboard();
         muatTabelRekapPesanan();
+    }
+
+    private void tampilkanSesiPengguna() {
+        lblRoleText.setForeground(Color.WHITE);
+        lblRoleText.setFont(new Font("Segoe UI", Font.BOLD, 12));
+
+        try {
+            Pengguna currentUser = SesiPengguna.getPengguna();
+            if (currentUser instanceof StafPenjualan) {
+                StafPenjualan staf = (StafPenjualan) currentUser;
+                String nama = staf.getNamaLengkap();
+                lblRoleText.setText((nama != null && !nama.trim().isEmpty()) ? nama : "Budi Santoso");
+                lblWilayahText.setText(staf.getWilayahPenjualan() != null ? staf.getWilayahPenjualan() : "Samarinda Ulu");
+            } else if (currentUser != null) {
+                String nama = currentUser.getNamaLengkap();
+                lblRoleText.setText((nama != null && !nama.trim().isEmpty()) ? nama : "Budi Santoso");
+                lblWilayahText.setText("Samarinda Ulu");
+            } else {
+                lblRoleText.setText("Budi Santoso");
+                lblWilayahText.setText("Samarinda Ulu");
+            }
+        } catch (Exception e) {
+            lblRoleText.setText("Budi Santoso");
+            lblWilayahText.setText("Samarinda Ulu");
+        }
     }
 
     private static String formatRupiah(double nominal) {
@@ -302,10 +320,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
             }
 
             if (imgAsli != null) {
-                int sampleRgb = imgAsli.getRGB(0, 0);
-                Color warnaBgLogo = new Color((sampleRgb >> 16) & 0xFF, (sampleRgb >> 8) & 0xFF, sampleRgb & 0xFF);
-                panelSidebar.setBackground(warnaBgLogo);
-
                 Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
                 lblLogoSidebar.setIcon(new ImageIcon(imgResized));
                 lblLogoSidebar.setText("");
@@ -321,11 +335,11 @@ public class FormMenuStaf extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        lblRoleText = new javax.swing.JLabel();
         panelSidebar = new javax.swing.JPanel();
         lblLogoSidebar = new javax.swing.JLabel();
         panelBadgeUser = new javax.swing.JPanel();
         lblDotStatus = new javax.swing.JLabel();
+        lblRoleText = new javax.swing.JLabel();
         lblWilayahText = new javax.swing.JLabel();
         btnNavMenu = new javax.swing.JButton();
         btnNavPelanggan = new javax.swing.JButton();
@@ -351,10 +365,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
         jScrollPaneTabel = new javax.swing.JScrollPane();
         tblRiwayat = new javax.swing.JTable();
 
-        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
-        lblRoleText.setText("Staf Penjualan");
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Menu Staf Penjualan");
         setResizable(false);
@@ -370,9 +380,13 @@ public class FormMenuStaf extends javax.swing.JFrame {
         lblDotStatus.setForeground(new java.awt.Color(34, 196, 95));
         lblDotStatus.setText("●");
 
+        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
+        lblRoleText.setText("Budi Santoso");
+
         lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblWilayahText.setForeground(new java.awt.Color(134, 148, 160));
-        lblWilayahText.setText("Samarinda");
+        lblWilayahText.setText("Samarinda Ulu");
 
         javax.swing.GroupLayout panelBadgeUserLayout = new javax.swing.GroupLayout(panelBadgeUser);
         panelBadgeUser.setLayout(panelBadgeUserLayout);
@@ -382,14 +396,18 @@ public class FormMenuStaf extends javax.swing.JFrame {
                 .addGap(12, 12, 12)
                 .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
-                .addComponent(lblWilayahText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblRoleText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblWilayahText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(16, Short.MAX_VALUE))
         );
         panelBadgeUserLayout.setVerticalGroup(
             panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBadgeUserLayout.createSequentialGroup()
                 .addGap(8, 8, 8)
-                .addComponent(lblDotStatus)
+                .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblDotStatus)
+                    .addComponent(lblRoleText))
                 .addGap(2, 2, 2)
                 .addComponent(lblWilayahText)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
