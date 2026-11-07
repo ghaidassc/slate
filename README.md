@@ -291,55 +291,71 @@ Pilih **Hak Akses (Role)** yang sesuai dengan akun sebelum menekan tombol Login.
 
 <img width="1064" height="663" alt="image" src="https://github.com/user-attachments/assets/6d399632-dba8-43f1-bddd-df0353c9221a" />
 
-Pada halaman login, pengguna memasukkan nama pengguna dan sandi yang telah terdaftar di dalam sistem. Pengguna juga perlu memilih hak akses sesuai dengan perannya, yaitu Admin Gudang atau Staf Penjualan. Setelah menekan tombol LOGIN, sistem akan memvalidasi informasi tersebut dan mengarahkan pengguna ke halaman utama sesuai hak aksesnya.
+Pada halaman login, pengguna memasukkan nama pengguna dan sandi yang telah terdaftar di dalam sistem. Pengguna juga perlu memilih hak akses sesuai dengan perannya, yaitu Admin Gudang atau Staf Penjualan. Setelah menekan tombol LOGIN, sistem akan memvalidasi informasi tersebut dan mengarahkan pengguna ke halaman utama sesuai hak aksesnya. Jika informasi yang dimasukkan tidak sesuai, sistem akan menampilkan pesan kesalahan dan meminta pengguna melakukan login kembali.
 
 **2. Menu Admin Gudang**
 
+Halaman Admin Gudang menampilkan daftar semen yang tersedia beserta informasi produk dan jumlah stoknya. Admin dapat memantau kondisi persediaan melalui status stok yang ditampilkan pada tabel. Baris berstatus Kritis menandakan jumlah stok semen sudah berada di bawah atau sama dengan batas aman yang telah ditentukan.
+
 <img width="1365" height="847" alt="image" src="https://github.com/user-attachments/assets/0863644b-9697-4f4b-a6f6-180c40847c1f" />
 
-Halaman Admin Gudang menampilkan daftar semen yang tersedia beserta informasi dan jumlah stoknya. Admin dapat memantau kondisi persediaan melalui status stok yang ditampilkan pada tabel. Baris berstatus Kritis menandakan jumlah stok semen sudah berada di bawah atau sama dengan batas aman.
+Melalui halaman ini, Admin Gudang dapat mengakses fitur pengelolaan persediaan sesuai kebutuhan. Fitur yang tersedia meliputi penambahan stok semen, perubahan data semen, serta penambahan atau penghapusan jenis semen. Halaman ini menjadi pusat pengelolaan persediaan bagi Admin Gudang.
 
 **3. Tambah Stok Semen**
 
+Fitur Tambah Stok Semen digunakan untuk mencatat pasokan semen yang baru diterima oleh gudang. Admin Gudang memilih varian semen yang sesuai, kemudian memasukkan nomor batch dan jumlah pasokan yang diterima. Informasi tersebut digunakan sebagai data pencatatan stok masuk.
+
 <img width="1370" height="846" alt="image" src="https://github.com/user-attachments/assets/6dcf8906-6ce4-481b-a592-0e7681ebdd12" />
 
-Admin Gudang dapat menambahkan pasokan semen yang baru masuk melalui halaman ini. Proses dilakukan dengan memilih varian semen, memasukkan nomor batch, serta mengisi jumlah pasokan yang diterima. Setelah disimpan, sistem memperbarui jumlah stok di database dan menampilkan riwayat pasokan pada tabel.
+Setelah data disimpan, sistem memperbarui jumlah persediaan semen di database secara otomatis. Riwayat pasokan yang telah dimasukkan juga ditampilkan pada tabel sehingga Admin Gudang dapat memantau pencatatan stok masuk. Dengan demikian, jumlah persediaan dapat disesuaikan dengan pasokan yang diterima.
 
 **4. Ubah Data Semen**
 
+Fitur Ubah Data Semen digunakan untuk memperbarui informasi produk yang telah terdaftar di dalam sistem. Admin Gudang memilih ID semen yang ingin diubah, kemudian menyesuaikan informasi seperti nama semen, satuan, harga jual, atau batas aman stok. Data yang dipilih menjadi acuan dalam proses perubahan informasi.
+
 <img width="1364" height="849" alt="image" src="https://github.com/user-attachments/assets/8ff7a43e-568d-46e0-a229-41ac30087988" />
 
-Halaman ini digunakan Admin Gudang untuk memperbarui informasi semen yang sudah terdaftar. Admin memilih ID semen yang ingin diubah, kemudian menyesuaikan informasi seperti nama, satuan, harga jual, atau batas aman stok. Setelah perubahan disimpan, sistem memperbarui data semen sehingga informasi yang ditampilkan sesuai dengan data terbaru.
+Setelah informasi diperbarui, Admin Gudang menyimpan perubahan tersebut ke dalam sistem. Data semen pada database akan diperbarui sehingga informasi yang ditampilkan mencerminkan perubahan terbaru. Fitur ini membantu menjaga kesesuaian informasi produk yang digunakan dalam pengelolaan persediaan.
 
 **5. Tambah / Hapus Semen**
 
+Fitur Tambah/Hapus Semen digunakan untuk mengelola jenis semen yang tersedia dalam katalog sistem. Admin Gudang dapat mendaftarkan varian semen baru dengan memasukkan informasi produk yang diperlukan, seperti nama semen, satuan, harga jual, stok, dan batas aman. Data tersebut kemudian disimpan agar jenis semen baru dapat digunakan dalam proses pengelolaan stok dan pesanan.
+
 <img width="1364" height="851" alt="image" src="https://github.com/user-attachments/assets/0d0e631e-8d9e-4ccb-9c2b-3fa240dc4866" />
 
-Fitur ini digunakan untuk menambahkan varian semen baru atau menghapus data semen yang sudah tidak diperlukan. Untuk menambahkan semen, Admin Gudang mengisi informasi produk yang dibutuhkan sebelum menyimpannya ke sistem. Sementara itu, penghapusan dilakukan dengan memilih ID semen yang sesuai dan mengonfirmasi tindakan tersebut.
+Selain menambahkan produk, Admin Gudang juga dapat menghapus data semen yang sudah tidak diperlukan. Proses penghapusan dilakukan dengan memilih ID semen yang sesuai dan mengonfirmasi tindakan tersebut. Sistem kemudian memproses penghapusan data berdasarkan pilihan Admin Gudang.
 
 **6. Menu Staf Penjualan**
 
+Halaman Staf Penjualan menampilkan rekap pesanan yang telah tercatat di dalam sistem. Informasi tersebut membantu staf memantau transaksi penjualan yang berlangsung. Halaman ini juga menyediakan beberapa menu utama untuk mendukung kegiatan operasional penjualan.
+
 <img width="1370" height="848" alt="image" src="https://github.com/user-attachments/assets/308968e2-16aa-49d5-8061-99cbe8287a56" />
 
-Halaman Staf Penjualan menampilkan rekap pesanan yang tercatat dalam sistem. Staf dapat memantau informasi pesanan dan memilih menu sesuai kebutuhan operasional. Menu yang tersedia meliputi pengelolaan data pelanggan, pencatatan pesanan, serta pembaruan status pembayaran dan pengiriman.
+Staf Penjualan dapat memilih menu Kelola Data Pelanggan, Pencatatan Pesanan, atau Pembaruan Status Pembayaran/Pengiriman. Setiap menu mengarahkan staf ke fitur yang sesuai dengan kebutuhan pekerjaan. Dengan adanya menu ini, proses pengelolaan pelanggan dan transaksi dapat dilakukan melalui satu halaman utama.
 
 **7. Kelola Data Pelanggan**
 
+Fitur Kelola Data Pelanggan digunakan untuk menyimpan dan mengelola informasi pelanggan yang melakukan pembelian semen. Staf Penjualan dapat menambahkan pelanggan baru dengan memasukkan informasi yang diperlukan. Data pelanggan yang tersimpan akan ditampilkan dalam tabel sehingga dapat digunakan kembali saat melakukan pencatatan pesanan.
+
 <img width="1367" height="848" alt="image" src="https://github.com/user-attachments/assets/ace96dbf-8f45-4562-9796-85fe2ad1451b" />
 
-Halaman ini digunakan untuk mengelola informasi pelanggan yang tersimpan dalam database. Staf Penjualan dapat menambahkan pelanggan baru atau mencari pelanggan berdasarkan nama toko maupun kontraktor. Selain itu, staf dapat mengubah dan menghapus data pelanggan yang dipilih melalui tabel sesuai kebutuhan.
+Selain menambahkan pelanggan, staf dapat mencari data berdasarkan nama toko atau kontraktor untuk mempermudah pencarian. Staf juga dapat mengubah informasi pelanggan maupun menghapus data yang dipilih sesuai kebutuhan. Setiap perubahan dilakukan terhadap data pelanggan yang tersimpan di dalam sistem.
 
 **8. Pencatatan Pesanan**
 
+Fitur Pencatatan Pesanan digunakan oleh Staf Penjualan untuk mencatat transaksi pembelian semen dari pelanggan. Proses dimulai dengan memilih pelanggan, kemudian menambahkan satu atau beberapa jenis semen beserta jumlah yang dipesan. Sistem akan memeriksa ketersediaan stok untuk memastikan jumlah semen yang diminta dapat dipenuhi.
+
 <img width="1364" height="843" alt="image" src="https://github.com/user-attachments/assets/97bd89bc-82c1-498a-9a33-c25e6e042c45" />
 
-Staf Penjualan memulai pencatatan pesanan dengan memilih pelanggan yang akan melakukan pembelian. Selanjutnya, staf dapat menambahkan satu atau beberapa jenis semen beserta jumlah yang dipesan, kemudian menentukan metode dan status pembayaran. Sistem memeriksa ketersediaan stok dan menolak pesanan apabila jumlah semen yang diminta melebihi persediaan.
+Setelah pesanan dimasukkan, sistem menghitung total tagihan berdasarkan jenis dan jumlah semen yang dipilih. Staf kemudian menentukan metode serta status pembayaran sesuai transaksi yang dilakukan. Sistem akan menolak item pesanan apabila jumlah yang diminta melebihi stok tersedia, sehingga pencatatan pesanan tetap memperhatikan kondisi persediaan gudang.
 
 **9. Pembaruan Status Pembayaran/Pengiriman**
 
+Fitur Pembaruan Status Pembayaran/Pengiriman digunakan untuk memperbarui perkembangan transaksi yang telah tercatat. Staf Penjualan memilih pesanan dari tabel, kemudian menentukan informasi yang ingin diperbarui, baik status pembayaran maupun status pengiriman. Setelah perubahan dilakukan, staf menyimpan pembaruan tersebut ke dalam sistem.
+
 <img width="1368" height="844" alt="image" src="https://github.com/user-attachments/assets/52d28539-651c-411b-8cd4-b207f88f4fd3" />
 
-Fitur ini digunakan oleh Staf Penjualan untuk memperbarui informasi pembayaran maupun status pengiriman pesanan. Staf memilih pesanan yang ingin diperbarui dari tabel, kemudian mengubah status sesuai kondisi transaksi. Setelah perubahan disimpan, sistem memperbarui status pesanan dan memulihkan stok semen secara otomatis apabila pesanan berstatus Refund.
+Status pembayaran digunakan untuk menunjukkan kondisi pelunasan pesanan, sedangkan status pengiriman digunakan untuk memantau proses distribusi semen kepada pelanggan. Apabila pesanan dibatalkan dan diproses sebagai Refund, sistem akan memulihkan stok semen secara otomatis. Dengan fitur ini, informasi transaksi dan persediaan dapat tetap diperbarui sesuai kondisi pesanan.
 
 ## Kontributor
 
