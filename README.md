@@ -200,7 +200,7 @@ Atribut pada class `Pengguna` (`idPengguna`, `namaPengguna`, `sandiPengguna`, `n
 
 ### Akun Contoh
 
-| Peran | Nama pengguna | Sandi |
+| Peran | Nama pengguna | Sandi Pengguna |
 |---|---|---|
 | Admin Gudang | `joko.susilo` | `admin_pass_01` |
 | Staf Penjualan | `budi.santoso` | `staf_pass_01` |
