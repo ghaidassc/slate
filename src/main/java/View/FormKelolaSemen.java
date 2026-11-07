@@ -679,9 +679,14 @@ public class FormKelolaSemen extends javax.swing.JFrame {
                 bersihkanFormTambah();
                 loadTabelKatalogMaster();
             }
+        } catch (IllegalArgumentException ex) {
+            // Menangkap pesan validasi dari DAO saat ID sudah pernah digunakan
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "ID Duplikat", JOptionPane.WARNING_MESSAGE);
+            txtIdSemen.requestFocus();
         } catch (SQLException ex) {
             if (ex.getErrorCode() == 1062) {
                 JOptionPane.showMessageDialog(this, "ID Semen #" + id + " sudah terdaftar di database! Gunakan nomor ID yang lain.", "ID Duplikat", JOptionPane.ERROR_MESSAGE);
+                txtIdSemen.requestFocus();
             } else {
                 JOptionPane.showMessageDialog(this, "Gagal menambahkan varian semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
             }

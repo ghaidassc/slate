@@ -1,13 +1,5 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
-/**
- *
- * @author LOQ
- */
 public class Pelanggan {
     private int idPelanggan;
     private String namaUsaha;
@@ -15,21 +7,33 @@ public class Pelanggan {
     private String nomorTelepon;
     private String alamat;
 
-    // Konstruktor untuk data baru (tanpa ID)
+    // Konstruktor data baru (tanpa ID)
     public Pelanggan(String namaUsaha, String jenisPelanggan, String nomorTelepon, String alamat) {
-        this.namaUsaha = namaUsaha;
-        this.jenisPelanggan = jenisPelanggan;
-        this.nomorTelepon = nomorTelepon;
-        this.alamat = alamat;
+        this.namaUsaha = namaUsaha != null ? namaUsaha.trim() : "";
+        this.jenisPelanggan = jenisPelanggan != null ? jenisPelanggan.trim() : "";
+        this.nomorTelepon = nomorTelepon != null ? nomorTelepon.trim() : "";
+        this.alamat = alamat != null ? alamat.trim() : "";
     }
 
     // Konstruktor lengkap (dengan ID)
     public Pelanggan(int idPelanggan, String namaUsaha, String jenisPelanggan, String nomorTelepon, String alamat) {
+        this(namaUsaha, jenisPelanggan, nomorTelepon, alamat);
         this.idPelanggan = idPelanggan;
-        this.namaUsaha = namaUsaha;
-        this.jenisPelanggan = jenisPelanggan;
-        this.nomorTelepon = nomorTelepon;
-        this.alamat = alamat;
+    }
+
+    /**
+     * Logika validasi bisnis
+     */
+    public void validasi() throws IllegalArgumentException {
+        if (namaUsaha.isEmpty() || nomorTelepon.isEmpty() || alamat.isEmpty()) {
+            throw new IllegalArgumentException("Semua data formulir wajib diisi!");
+        }
+        if (nomorTelepon.length() < 10) {
+            throw new IllegalArgumentException("Nomor telepon minimal 10 digit!");
+        }
+        if (!nomorTelepon.matches("^[0-9+]+$")) {
+            throw new IllegalArgumentException("Nomor telepon hanya boleh berisi angka!");
+        }
     }
 
     // Getter dan Setter
@@ -72,4 +76,7 @@ public class Pelanggan {
     public void setAlamat(String alamat) {
         this.alamat = alamat;
     }
+
+    public String getNamaPelanggan() { return namaUsaha; }
+    public String getNoHp() { return nomorTelepon; }
 }

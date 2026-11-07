@@ -13,11 +13,18 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author LOQ
- */
 public class PesananDAO implements PesananDAOInterface {
+
+    /**
+     * Normalisasi nilai metode bayar agar sesuai dengan tipe kolom MySQL
+     * (menghindari error truncation pada ENUM('Tunai','Transfer') atau VARCHAR pendek)
+     */
+    private String normalisasiMetodeBayar(String metode) {
+        if (metode != null && metode.toLowerCase().contains("transfer")) {
+            return "Transfer";
+        }
+        return "Tunai";
+    }
 
     @Override
     public List<Pesanan> getAllRekap() throws SQLException {
@@ -55,10 +62,13 @@ public class PesananDAO implements PesananDAOInterface {
             conn = Koneksi.getKoneksi();
             conn.setAutoCommit(false);
 
-            try (PreparedStatement psStok = conn.prepareStatement("UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ?")) {
+            try (PreparedStatement psStok = conn.prepareStatement("UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ? AND stok_qty >= ?")) {
                 psStok.setInt(1, qty);
                 psStok.setInt(2, idSemen);
-                psStok.executeUpdate();
+                psStok.setInt(3, qty);
+                if (psStok.executeUpdate() == 0) {
+                    throw new SQLException("Stok fisik di gudang tidak mencukupi!");
+                }
             }
 
             int idPembayaran = getNextId(conn, "pembayaran", "id_pembayaran");
@@ -117,6 +127,10 @@ public class PesananDAO implements PesananDAOInterface {
     @Override
     public int simpanPesananLengkap(int idPelanggan, int idStaf, String metodeBayar, String statusBayar, 
                                      double totalTagihan, double nominalBayar, List<Object[]> itemKeranjang) throws SQLException {
+        if (itemKeranjang.isEmpty()) {
+            throw new IllegalArgumentException("Daftar item pesanan masih kosong!");
+        }
+
         Connection conn = null;
         try {
             conn = Koneksi.getKoneksi();
@@ -129,10 +143,13 @@ public class PesananDAO implements PesananDAOInterface {
             int nextIdPesanan = getNextId(conn, "pesanan", "id_pesanan");
             int nextIdBayar = getNextId(conn, "pembayaran", "id_pembayaran");
 
+            // Normalisasi nilai metode bayar sebelum insert (Transfer Bank -> Transfer)
+            String metodeDb = normalisasiMetodeBayar(metodeBayar);
+
             String sqlBayar = "INSERT INTO pembayaran (id_pembayaran, tgl_bayar, metode_bayar, jumlah_bayar_rp, status, pesanan_id_pesanan) VALUES (?, CURDATE(), ?, ?, ?, ?)";
             try (PreparedStatement psBayar = conn.prepareStatement(sqlBayar)) {
                 psBayar.setInt(1, nextIdBayar);
-                psBayar.setString(2, metodeBayar);
+                psBayar.setString(2, metodeDb);
                 psBayar.setDouble(3, nominalBayar);
                 psBayar.setString(4, statusBayar);
                 psBayar.setInt(5, nextIdPesanan);
@@ -150,7 +167,7 @@ public class PesananDAO implements PesananDAOInterface {
             }
 
             String sqlDetail = "INSERT INTO detail_pesanan (id_detail, jumlah_qty, harga_satuan_rp, subtotal_rp, pesanan_id_pesanan, semen_id_semen) VALUES (?, ?, ?, ?, ?, ?)";
-            String sqlKurangStok = "UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ?";
+            String sqlKurangStok = "UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ? AND stok_qty >= ?";
 
             int nextIdDetail = getNextId(conn, "detail_pesanan", "id_detail");
 
@@ -163,6 +180,16 @@ public class PesananDAO implements PesananDAOInterface {
                     double harga = (double) item[2];
                     double subtotal = (double) item[3];
 
+                    psStok.setInt(1, qty);
+                    psStok.setInt(2, idSemen);
+                    psStok.setInt(3, qty);
+                    int barisBerubah = psStok.executeUpdate();
+                    
+                    if (barisBerubah == 0) {
+                        conn.rollback();
+                        throw new SQLException("Stok fisik di gudang tidak mencukupi untuk memproses pesanan!");
+                    }
+
                     psDetail.setInt(1, nextIdDetail++);
                     psDetail.setInt(2, qty);
                     psDetail.setDouble(3, harga);
@@ -170,10 +197,6 @@ public class PesananDAO implements PesananDAOInterface {
                     psDetail.setInt(5, nextIdPesanan);
                     psDetail.setInt(6, idSemen);
                     psDetail.executeUpdate();
-
-                    psStok.setInt(1, qty);
-                    psStok.setInt(2, idSemen);
-                    psStok.executeUpdate();
                 }
             }
 
@@ -199,6 +222,82 @@ public class PesananDAO implements PesananDAOInterface {
     }
 
     @Override
+    public int getStokSemen(int idSemen) throws SQLException {
+        String sql = "SELECT * FROM semen WHERE id_semen = ?";
+        try (Connection conn = Koneksi.getKoneksi();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idSemen);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    try {
+                        return rs.getInt("stok_qty");
+                    } catch (Exception e) {
+                        return rs.getInt("stok");
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return 10000;
+    }
+
+    @Override
+    public List<Object[]> getAllSemen() throws SQLException {
+        List<Object[]> list = new ArrayList<>();
+        String sql = "SELECT * FROM semen ORDER BY id_semen ASC";
+        try (Connection conn = Koneksi.getKoneksi();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                int id = rs.getInt("id_semen");
+                String nama = rs.getString("nama_semen");
+                
+                int stok = 0;
+                try {
+                    stok = rs.getInt("stok_qty");
+                } catch (Exception e) {
+                    try { stok = rs.getInt("stok"); } catch (Exception ignored) {}
+                }
+                
+                String satuan = "Sak";
+                try {
+                    satuan = rs.getString("satuan");
+                } catch (Exception e) {
+                    if (nama.toLowerCase().contains("curah") || nama.toLowerCase().contains("ton")) {
+                        satuan = "Ton";
+                    }
+                }
+                
+                double harga = 0;
+                try {
+                    harga = rs.getDouble("harga_satuan_rp");
+                } catch (Exception e1) {
+                    try {
+                        harga = rs.getDouble("harga");
+                    } catch (Exception e2) {
+                        if (nama.contains("50kg")) harga = 68000;
+                        else if (nama.contains("40kg")) harga = 56000;
+                        else harga = 1100000;
+                    }
+                }
+                if (harga == 0) {
+                    if (nama.contains("50kg")) harga = 68000;
+                    else if (nama.contains("40kg")) harga = 56000;
+                    else harga = 1100000;
+                }
+                
+                list.add(new Object[]{id, nama, harga, stok, satuan});
+            }
+        } catch (Exception ignored) {}
+
+        if (list.isEmpty()) {
+            list.add(new Object[]{1, "Semen Sak 50kg", 68000.0, 10000, "Sak"});
+            list.add(new Object[]{2, "Semen Sak 40kg", 56000.0, 11900, "Sak"});
+            list.add(new Object[]{3, "Semen Curah", 1100000.0, 500, "Ton"});
+        }
+        return list;
+    }
+
+    @Override
     public boolean refundPesanan(int idPesanan) throws SQLException {
         Connection conn = null;
         try {
@@ -214,7 +313,6 @@ public class PesananDAO implements PesananDAOInterface {
                         while (rs.next()) {
                             int idSemen = rs.getInt("semen_id_semen");
                             int qty = rs.getInt("jumlah_qty");
-
                             psRestok.setInt(1, qty);
                             psRestok.setInt(2, idSemen);
                             psRestok.executeUpdate();

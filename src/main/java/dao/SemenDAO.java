@@ -11,11 +11,21 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- *
- * @author LOQ
- */
 public class SemenDAO implements SemenDAOInterface {
+
+    /**
+     * Memeriksa apakah ID semen sudah terdaftar di database
+     */
+    public boolean isIdAda(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM semen WHERE id_semen = ?";
+        try (Connection conn = Koneksi.getKoneksi();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
 
     @Override
     public List<Semen> getAll() throws SQLException {
@@ -62,6 +72,11 @@ public class SemenDAO implements SemenDAOInterface {
 
     @Override
     public boolean insert(Semen semen) throws SQLException {
+        // Validasi Duplikasi ID: Mencegah penambahan jika ID semen sudah ada di database
+        if (isIdAda(semen.getIdSemen())) {
+            throw new IllegalArgumentException("ID Semen #" + semen.getIdSemen() + " sudah digunakan! Silakan gunakan nomor ID yang lain.");
+        }
+
         String sql = "INSERT INTO semen (id_semen, nama_semen, satuan, harga_jual_rp, stok_qty, batas_aman) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = Koneksi.getKoneksi();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -117,7 +132,6 @@ public class SemenDAO implements SemenDAOInterface {
             conn = Koneksi.getKoneksi();
             conn.setAutoCommit(false);
 
-            // 1. Tambah stok fisik semen di gudang
             String sqlStok = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
             try (PreparedStatement psStok = conn.prepareStatement(sqlStok)) {
                 psStok.setInt(1, jumlah);
@@ -125,7 +139,6 @@ public class SemenDAO implements SemenDAOInterface {
                 psStok.executeUpdate();
             }
 
-            // 2. Simpan transaksi masuk ke header (stok_masuk) dan detail (detail_stok_masuk)
             String sqlHeader = "INSERT INTO stok_masuk (tgl_masuk, id_admin) VALUES (CURDATE(), ?)";
             try (PreparedStatement psHeader = conn.prepareStatement(sqlHeader, Statement.RETURN_GENERATED_KEYS)) {
                 psHeader.setInt(1, idAdmin);
@@ -145,7 +158,6 @@ public class SemenDAO implements SemenDAOInterface {
                     }
                 }
             } catch (SQLException fallbackException) {
-                // Skema alternatif jika database menggunakan tabel tunggal 'pasokan'
                 try {
                     String sqlPasokan = "INSERT INTO pasokan (semen_id_semen, no_batch, jumlah_masuk, admin_id, tanggal_masuk) VALUES (?, ?, ?, ?, CURDATE())";
                     try (PreparedStatement psPasokan = conn.prepareStatement(sqlPasokan)) {

@@ -4,7 +4,6 @@ import Model.Pengguna;
 import dao.PenggunaDAO;
 import Util.SesiPengguna;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -40,7 +39,6 @@ public class FormLogin extends javax.swing.JFrame {
     }
 
     private void rapikanGayaKomponen() {
-        // Border lembut rounded dengan padding di dalam
         Border garisBiasa = new LineBorder(warnaBorderDefault, 1, true);
         Border paddingBiasa = new EmptyBorder(0, 14, 0, 14);
         Border styleBiasa = new CompoundBorder(garisBiasa, paddingBiasa);
@@ -52,7 +50,6 @@ public class FormLogin extends javax.swing.JFrame {
         txtPassword.setBorder(styleBiasa);
         cmbRole.setBorder(new EmptyBorder(0, 4, 0, 4));
 
-        // Setup placeholder Username
         txtUsername.setText(PLACEHOLDER_USER);
         txtUsername.setForeground(warnaPlaceholder);
         txtUsername.addFocusListener(new FocusAdapter() {
@@ -75,7 +72,6 @@ public class FormLogin extends javax.swing.JFrame {
             }
         });
 
-        // Setup placeholder Password
         txtPassword.setEchoChar((char) 0);
         txtPassword.setText(PLACEHOLDER_PASS);
         txtPassword.setForeground(warnaPlaceholder);
@@ -307,18 +303,6 @@ public class FormLogin extends javax.swing.JFrame {
                             "Login Berhasil! Selamat datang, " + user.getNamaLengkap(),
                             "Sukses",
                             JOptionPane.INFORMATION_MESSAGE);
-                    
-                    try {
-                        FormMenuStaf menuStaf = new FormMenuStaf();
-                        menuStaf.setVisible(true);
-                        this.dispose();
-                    } catch (Throwable t) {
-                        t.printStackTrace(); // Menampilkan error baris kode ke Output NetBeans
-                        JOptionPane.showMessageDialog(this, 
-                            "Gagal membuka Menu Staf: " + t.getMessage(), 
-                            "Error Inisialisasi", 
-                            JOptionPane.ERROR_MESSAGE);
-                    }
 
                     new FormMenuStaf().setVisible(true);
                     this.dispose();

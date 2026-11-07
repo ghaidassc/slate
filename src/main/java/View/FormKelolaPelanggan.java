@@ -55,20 +55,29 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         rapikanKomponenForm();
         pasangPlaceholderCari();
         pasangLogoSidebar();
+        tampilkanSesiUser();
 
+        modelTabel = (DefaultTableModel) tblPelanggan.getModel();
+        desainTabelModern();
+        kosongkanForm();
+        muatDataPelanggan("", "Semua Jenis");
+    }
+
+    private void tampilkanSesiUser() {
         try {
             Pengguna currentUser = SesiPengguna.getPengguna();
             if (currentUser instanceof StafPenjualan) {
                 StafPenjualan staf = (StafPenjualan) currentUser;
                 lblRoleText.setText(staf.getNamaLengkap());
                 lblWilayahText.setText(staf.getWilayahPenjualan());
+            } else if (currentUser != null) {
+                lblRoleText.setText(currentUser.getNamaLengkap());
+                lblWilayahText.setText("Samarinda Ulu");
+            } else {
+                lblRoleText.setText("Budi Santoso");
+                lblWilayahText.setText("Samarinda Ulu");
             }
         } catch (Exception ignored) {}
-
-        modelTabel = (DefaultTableModel) tblPelanggan.getModel();
-        desainTabelModern();
-        kosongkanForm();
-        muatDataPelanggan("", "Semua Jenis");
     }
 
     private void pasangPlaceholderCari() {
@@ -162,6 +171,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         tblPelanggan.getColumnModel().getColumn(4).setMaxWidth(0);
         tblPelanggan.getColumnModel().getColumn(4).setWidth(0);
 
+        // Renderer Kolom ID
         tblPelanggan.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -173,12 +183,12 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         });
 
+        // Renderer Kolom Nama Usaha (Baris 1 = Nama Usaha, Baris 2 = Alamat)
         tblPelanggan.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
                 String nama = value != null ? value.toString() : "";
-                
                 Object alamatObj = table.getModel().getValueAt(row, 4);
                 String alamat = (alamatObj != null && !alamatObj.toString().trim().isEmpty()) ? alamatObj.toString() : "-";
 
@@ -191,8 +201,10 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         });
 
+        // Renderer Badge Jenis
         tblPelanggan.getColumnModel().getColumn(2).setCellRenderer(new BadgeJenisRenderer());
 
+        // Renderer Kontak (Telepon)
         tblPelanggan.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -201,11 +213,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                 lbl.setForeground(new Color(100, 116, 139));
                 if (value != null) {
                     String str = value.toString().trim();
-                    if (str.length() > 5) {
-                        lbl.setText("..." + str.substring(str.length() - 5));
-                    } else {
-                        lbl.setText(str);
-                    }
+                    lbl.setText(str.length() > 5 ? "..." + str.substring(str.length() - 5) : str);
                 }
                 lbl.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
                 return lbl;
@@ -271,8 +279,8 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                     p.getIdPelanggan(),
                     p.getNamaUsaha(),
                     p.getJenisPelanggan(),
-                    p.getAlamat(),
-                    p.getNomorTelepon()
+                    p.getNomorTelepon(),
+                    p.getAlamat()
                 });
             }
         } catch (SQLException e) {
@@ -466,7 +474,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                     .addComponent(btnNavMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavPelanggan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavPesanan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnNavStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnNavStatus, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
                     .addComponent(btnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap(15, Short.MAX_VALUE))
         );
@@ -784,11 +792,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             txtNamaUsaha.setText(tblPelanggan.getValueAt(row, 1).toString());
             
             String jenisStr = tblPelanggan.getValueAt(row, 2).toString();
-            if (jenisStr.toLowerCase().contains("toko")) {
-                cmbJenisPelanggan.setSelectedItem("Toko Bangunan");
-            } else {
-                cmbJenisPelanggan.setSelectedItem("Kontraktor");
-            }
+            cmbJenisPelanggan.setSelectedItem(jenisStr.toLowerCase().contains("toko") ? "Toko Bangunan" : "Kontraktor");
             
             txtTelepon.setText(tblPelanggan.getModel().getValueAt(row, 3).toString());
             txtAlamat.setText(tblPelanggan.getModel().getValueAt(row, 4).toString());
@@ -800,24 +804,22 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
     }//GEN-LAST:event_tblPelangganMouseClicked
 
     private void btnSimpanActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanActionPerformed
-        String nama = txtNamaUsaha.getText().trim();
-        String jenis = (String) cmbJenisPelanggan.getSelectedItem();
-        String telepon = txtTelepon.getText().trim();
-        String alamat = txtAlamat.getText().trim();
-
-        if (nama.isEmpty() || telepon.isEmpty() || alamat.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Semua data formulir wajib diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         try {
-            Pelanggan p = new Pelanggan(0, nama, jenis, alamat, telepon);
-            boolean sukses = pelangganDAO.insert(p);
-            if (sukses) {
+            Pelanggan p = new Pelanggan(
+                txtNamaUsaha.getText(),
+                (String) cmbJenisPelanggan.getSelectedItem(),
+                txtTelepon.getText(),
+                txtAlamat.getText()
+            );
+
+            if (pelangganDAO.insert(p)) {
                 JOptionPane.showMessageDialog(this, "Data mitra berhasil disimpan!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 kosongkanForm();
                 muatDataPelanggan("", (String) cmbFilterJenis.getSelectedItem());
             }
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Peringatan", JOptionPane.WARNING_MESSAGE);
+            txtTelepon.requestFocus();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Gagal menyimpan: " + e.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
@@ -829,24 +831,23 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             return;
         }
 
-        String nama = txtNamaUsaha.getText().trim();
-        String jenis = (String) cmbJenisPelanggan.getSelectedItem();
-        String telepon = txtTelepon.getText().trim();
-        String alamat = txtAlamat.getText().trim();
-
-        if (nama.isEmpty() || telepon.isEmpty() || alamat.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Semua data formulir wajib diisi!", "Peringatan", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
         try {
-            Pelanggan p = new Pelanggan(selectedId, nama, jenis, alamat, telepon);
-            boolean sukses = pelangganDAO.update(p);
-            if (sukses) {
+            Pelanggan p = new Pelanggan(
+                selectedId,
+                txtNamaUsaha.getText(),
+                (String) cmbJenisPelanggan.getSelectedItem(),
+                txtTelepon.getText(),
+                txtAlamat.getText()
+            );
+
+            if (pelangganDAO.update(p)) {
                 JOptionPane.showMessageDialog(this, "Data mitra berhasil diperbarui!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                 kosongkanForm();
                 muatDataPelanggan("", (String) cmbFilterJenis.getSelectedItem());
             }
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Peringatan", JOptionPane.WARNING_MESSAGE);
+            txtTelepon.requestFocus();
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this, "Gagal mengubah: " + e.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
@@ -865,8 +866,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
         if (konfirm == JOptionPane.YES_OPTION) {
             try {
-                boolean sukses = pelangganDAO.delete(selectedId);
-                if (sukses) {
+                if (pelangganDAO.delete(selectedId)) {
                     JOptionPane.showMessageDialog(this, "Data mitra berhasil dihapus!", "Sukses", JOptionPane.INFORMATION_MESSAGE);
                     kosongkanForm();
                     muatDataPelanggan("", (String) cmbFilterJenis.getSelectedItem());
