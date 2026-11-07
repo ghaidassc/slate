@@ -120,6 +120,8 @@ Flowchart adalah diagram yang menggambarkan urutan langkah atau alur kerja suatu
   <p align="justify">Pada fitur ini, Admin Gudang dapat memilih untuk menambahkan jenis semen baru atau menghapus data semen yang tersedia. Penambahan dilakukan dengan memasukkan nama semen, satuan, harga jual, stok, dan batas aman yang kemudian divalidasi oleh sistem. Untuk penghapusan, admin memasukkan ID semen yang ingin dihapus dan melakukan konfirmasi. Setelah proses berhasil, sistem menyimpan perubahan ke database dan kembali ke halaman Admin Gudang.</p>
 </details>
 
+---
+
 ### Use Case
 
 Use case diagram digunakan untuk memetakan hubungan interaksi antara aktor (pengguna atau sistem eksternal) dengan fungsi-fungsi utama yang disediakan oleh sistem program secara visual. 
@@ -135,6 +137,8 @@ Staf Penjualan dapat memperbarui status pengiriman dan melakukan pembatalan sert
 
 Admin Gudang bertanggung jawab mengelola persediaan semen, termasuk menambahkan stok masuk dan mengelola data semen. Admin dapat melihat katalog dan harga, mengubah informasi produk, serta menghapus data semen. Sistem juga menyediakan peringatan otomatis apabila stok berada di bawah batas aman. Seluruh aktivitas Admin Gudang diawali dengan proses LOGIN.</p>
 </details>
+
+---
 
 ### ERD
 
@@ -156,6 +160,7 @@ ERD (Entity Relationship Diagram) adalah diagram yang menggambarkan struktur dat
   <p align="justify">ERD Relational merupakan penerapan struktur ERD Logical ke dalam bentuk tabel basis data yang dilengkapi atribut, primary key, dan foreign key. Staf_penjualan mencatat pesanan pelanggan yang terhubung dengan pembayaran melalui relasi One-to-One. Pesanan yang terdiri dari beberapa jenis semen dikelola melalui tabel detail_pesanan, sedangkan stok masuk dicatat oleh admin_gudang melalui tabel stok_masuk dan detail_stok_masuk. Hubungan antar tabel ini mendukung pencatatan transaksi, pembayaran, serta pembaruan persediaan semen.</p>
 </details>
 
+---
 
 ## Struktur Folder/Package
 
