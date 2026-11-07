@@ -49,7 +49,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Halaman Menu Login</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="1097" height="1012" alt="FlowchartSLATE (2)-Halaman Login drawio" src="https://github.com/user-attachments/assets/606618d5-662a-4140-9344-95fcd2c34d6d" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -57,7 +57,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Halaman Menu Staf Penjualan</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="1849" height="561" alt="FlowchartSLATE (2)-Halaman Menu Staf Penjualan drawio" src="https://github.com/user-attachments/assets/af5c4e6c-7ea1-4f41-b081-7dfd3cb42cbb" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -65,7 +65,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Fitur Kelola Data Pelanggan-Staf Penjualan</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="2467" height="1822" alt="FlowchartSLATE (2)-Fitur Kelola Data Pelanggan-Staf Penjualan drawio" src="https://github.com/user-attachments/assets/5ced0fa6-b1ba-449e-9de1-2da32c7f5f78" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -73,7 +73,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Fitur Pencatatan Pesanan-Staf Penjualan</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="767" height="2481" alt="FlowchartSLATE (2)-Fitur Pencatatan Pesanan-Staf Penjualan drawio" src="https://github.com/user-attachments/assets/4c61424a-ceac-4538-accf-128b0bdf83fb" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -81,7 +81,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Fitur Pembaruan Status Pembayaran/Pengiriman-Staf Penjualan</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="1642" height="1282" alt="FlowchartSLATE (2)-Fitur Pembaruan Status Pengiriman-Staf Penjualan drawio" src="https://github.com/user-attachments/assets/f0f8bc8f-311c-4bea-8317-b731b19d5ae8" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -89,7 +89,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Halaman Menu Admin Gudang</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="2037" height="449" alt="FlowchartSLATE (2)-Halaman Menu Admin Gudang drawio" src="https://github.com/user-attachments/assets/1f30be22-4cc3-475f-8921-1e33a56ec8cb" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -97,7 +97,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Fitur Tambah Stok Semen-Admin Gudang</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="699" height="816" alt="FlowchartSLATE (2)-Fitur Tambah Stok Semen-Admin Gudang drawio" src="https://github.com/user-attachments/assets/3971a976-8e88-4dab-b921-eaf972693bbc" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -105,7 +105,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Fitur Ubah Data Semen-Admin Gudang</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="504" height="1712" alt="FlowchartSLATE (2)-Fitur Ubah Data Semen-Admin Gudang drawio" src="https://github.com/user-attachments/assets/73fe969d-c5da-4094-b2e9-79a188e5a324" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
@@ -113,7 +113,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Fitur Tambah/Hapus Semen-Admin Gudang</summary>
-  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+  <img width="1372" height="1557" alt="FlowchartSLATE (2)-Fitur Tambah_Hapus Semen-Admin Gudang drawio" src="https://github.com/user-attachments/assets/284d3963-37d2-46d4-abb4-bf07473707be" />
 
 
   <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
