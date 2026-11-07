@@ -91,7 +91,7 @@ Pilih **Hak Akses (Role)** yang sesuai dengan akun sebelum menekan tombol Login.
 
 **1. Login**
 
-![Halaman Login](docs/screenshots/01-login.png)
+<img width="1064" height="663" alt="image" src="https://github.com/user-attachments/assets/6d399632-dba8-43f1-bddd-df0353c9221a" />
 
 Masukkan nama pengguna dan sandi, pilih hak akses, lalu tekan **LOGIN**.
 
