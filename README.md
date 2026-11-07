@@ -147,7 +147,7 @@ Pilih pesanan dari tabel, ubah status pembayaran atau pengiriman, lalu simpan. S
 
  Nama Anggota Kelompok:
 
-<img src="https://img.shields.io/badge/ISMULAZAM_ATMOKO-2509116034-ff69b4?style=for-the-badge&labelColor=1f2937" alt="Ismul Azzam Atmoko" height="72"><br>
+<img src="https://img.shields.io/badge/MUKHAMMAD_ISMUL_AZAM_ATMOKO-2509116034-ff69b4?style=for-the-badge&labelColor=1f2937" alt="Ismul Azzam Atmoko" height="72"><br>
 <img src="https://img.shields.io/badge/ZIAN_ALRAIS-2509116064-00bfff?style=for-the-badge&labelColor=1f2937" alt="Zian Al Rais" height="72"><br>
 <img src="https://img.shields.io/badge/GHAIDA_SUCI_NAHIZA-2509116077-fde68a?style=for-the-badge&labelColor=1f2937" alt="Ghaida Suci Nahiza" height="72"><br>
 <img src="https://img.shields.io/badge/MUHAMMAD_SYAWAL_SAMIR-2509116079-22c55e?style=for-the-badge&labelColor=1f2937" alt="Muhammad Syawal Samir" height="72">
