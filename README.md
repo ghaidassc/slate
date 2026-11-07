@@ -50,6 +50,12 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 ### Use Case
 
+<details>
+  <summary>Use Case SLATE</summary>
+  <img width="2488" height="1968" alt="Flowchart SLATE" src="LINK_GAMBAR_FLOWCHART" />
+
+  <p align="justify">[Penjelasan alur utama program dari awal hingga akhir.]</p>
+</details>
 
 ### ERD
 
