@@ -1,8 +1,13 @@
 package view;
 
-import Config.Koneksi;
+import Model.AdminGudang;
 import Model.Pengguna;
+import Model.Semen;
 import Util.SesiPengguna;
+import dao.AdminGudangDAO;
+import dao.AdminGudangDAOInterface;
+import dao.SemenDAO;
+import dao.SemenDAOInterface;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -10,16 +15,11 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -31,40 +31,50 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import Service.SemenService;
 
 public class FormTambahStokSemen extends javax.swing.JFrame {
 
     private static class VarianItem {
-        private final int id;
-        private final String nama;
-        private final String satuan;
+        private final Semen semen;
 
-        public VarianItem(int id, String nama, String satuan) {
-            this.id = id;
-            this.nama = nama;
-            this.satuan = satuan;
+        public VarianItem(Semen semen) {
+            this.semen = semen;
         }
 
-        public int getId() { return id; }
-        public String getSatuan() { return satuan; }
+        public Semen getSemen() {
+            return semen;
+        }
 
         @Override
         public String toString() {
-            return "[ID: " + id + "] " + nama;
+            return "[ID: " + semen.getIdSemen() + "] " + semen.getNamaSemen();
         }
     }
 
+    private final SemenDAOInterface semenDAO;
+    private final AdminGudangDAOInterface adminGudangDAO;
     private DefaultTableModel modelRiwayat;
-    private final Service.SemenService semenService = new Service.SemenService();
 
     public FormTambahStokSemen() {
+        this.semenDAO = new SemenDAO();
+        this.adminGudangDAO = new AdminGudangDAO();
         initComponents();
+
+        // Kunci ukuran Window Frame persis 1120 x 700 & Sidebar 240 x 680
+        panelSidebar.setPreferredSize(new Dimension(240, 680));
+        panelSidebar.setMinimumSize(new Dimension(240, 680));
+        panelSidebar.setMaximumSize(new Dimension(240, 32767));
+
+        this.setSize(1120, 700);
+        this.setPreferredSize(new Dimension(1120, 700));
+        this.setMinimumSize(new Dimension(1120, 700));
+        this.setMaximumSize(new Dimension(1120, 700));
+        this.setResizable(false);
         this.setLocationRelativeTo(null);
+
         rapikanTampilanTambahan();
         pasangLogoSidebar();
 
-        // Pastikan kedua field input kosong dari teks default
         txtBatchProduksi.setText("");
         txtInputStokBaru.setText("");
 
@@ -85,31 +95,29 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
     }
 
     private void tampilkanSesiPengguna() {
-    try {
-        Pengguna user = SesiPengguna.getPengguna();
-        if (user instanceof Model.AdminGudang) {
-            Model.AdminGudang admin = (Model.AdminGudang) user;
-            lblRoleText.setText(admin.getNamaLengkap());
-            lblShiftText.setText("Shift Kerja: " + admin.getShift());
-            lblPetugasNama.setText("Petugas: " + admin.getNamaLengkap() + " (ID: " + admin.getIdPengguna() + ") | Shift: " + admin.getShift());
-        }
-    } catch (Exception ignored) {}
-}
+        try {
+            Pengguna user = SesiPengguna.getPengguna();
+            if (user != null) {
+                lblRoleText.setText(user.getNamaLengkap());
+                String shift;
+                if (user instanceof AdminGudang) {
+                    shift = ((AdminGudang) user).getShift();
+                } else {
+                    shift = adminGudangDAO.getShiftByIdPengguna(user.getIdPengguna());
+                }
+                lblShiftText.setText("Shift Kerja: " + (shift != null ? shift : "Pagi"));
+                lblPetugasNama.setText("Petugas: " + user.getNamaLengkap() + " (ID: " + user.getIdPengguna() + ") | Shift: " + shift);
+            }
+        } catch (Exception ignored) {}
+    }
 
     private void loadVarianSemen() {
         cmbVarianSemen.removeAllItems();
-        String sql = "SELECT id_semen, nama_semen, satuan FROM semen ORDER BY id_semen ASC";
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int id = rs.getInt("id_semen");
-                String nama = rs.getString("nama_semen");
-                String satuan = rs.getString("satuan");
-                cmbVarianSemen.addItem(new VarianItem(id, nama, satuan));
+        try {
+            List<Semen> list = semenDAO.getAll();
+            for (Semen s : list) {
+                cmbVarianSemen.addItem(new VarianItem(s));
             }
-
             perbaruiInfoStokSaatIni();
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Gagal memuat varian semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
@@ -120,15 +128,10 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         Object itemTerpilih = cmbVarianSemen.getSelectedItem();
         if (itemTerpilih instanceof VarianItem) {
             VarianItem varian = (VarianItem) itemTerpilih;
-            String sql = "SELECT stok_qty FROM semen WHERE id_semen = ?";
-            try (Connection conn = Koneksi.getKoneksi();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setInt(1, varian.getId());
-                try (ResultSet rs = ps.executeQuery()) {
-                    if (rs.next()) {
-                        int stok = rs.getInt("stok_qty");
-                        lblBadgeStokSaatIni.setText("Stok Gudang Saat Ini: " + formatRupiah(stok) + " " + varian.getSatuan());
-                    }
+            try {
+                Semen s = semenDAO.getById(varian.getSemen().getIdSemen());
+                if (s != null) {
+                    lblBadgeStokSaatIni.setText("Stok Gudang Saat Ini: " + formatRupiah(s.getStok()) + " " + s.getSatuan());
                 }
             } catch (SQLException ex) {
                 lblBadgeStokSaatIni.setText("Stok Gudang Saat Ini: -");
@@ -146,31 +149,14 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         };
         tblRiwayat.setModel(modelRiwayat);
 
-        String sql = "SELECT sm.tgl_masuk, dsm.batch, s.nama_semen, dsm.jumlah_qty " +
-                     "FROM detail_stok_masuk dsm " +
-                     "JOIN stok_masuk sm ON dsm.stok_masuk_id_stok_masuk = sm.id_stok_masuk " +
-                     "JOIN semen s ON dsm.semen_id_semen = s.id_semen " +
-                     "ORDER BY sm.id_stok_masuk DESC";
-
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy");
-            while (rs.next()) {
-                java.sql.Date tgl = rs.getDate("tgl_masuk");
-                String tglStr = (tgl != null) ? sdf.format(tgl) : "-";
-                String batch = rs.getString("batch");
-                String namaSemen = rs.getString("nama_semen");
-                int qty = rs.getInt("jumlah_qty");
-
-                String labelSemen = namaSemen.replace("Semen ", "");
-
+        try {
+            List<Object[]> riwayat = semenDAO.getRiwayatPasokanMasuk();
+            for (Object[] baris : riwayat) {
                 modelRiwayat.addRow(new Object[]{
-                    tglStr,
-                    batch,
-                    labelSemen,
-                    "+" + formatRupiah(qty)
+                    baris[0],
+                    baris[1],
+                    baris[2],
+                    "+" + formatRupiah(Double.parseDouble(baris[3].toString()))
                 });
             }
         } catch (SQLException ex) {
@@ -184,6 +170,8 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
 
         txtBatchProduksi.setBorder(BorderFactory.createCompoundBorder(borderField, paddingField));
         txtInputStokBaru.setBorder(BorderFactory.createCompoundBorder(borderField, paddingField));
+        panelCardForm.setBorder(borderField);
+        panelCardTabel.setBorder(borderField);
     }
 
     private void pasangLogoSidebar() {
@@ -211,17 +199,13 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
             }
 
             if (imgAsli != null) {
-                int rgbPojok = imgAsli.getRGB(0, 0);
-                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                panelSidebar.setBackground(warnaAsliLogo);
-
                 Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
                 lblLogoSidebar.setIcon(new ImageIcon(imgResized));
                 lblLogoSidebar.setText("");
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
     }
@@ -238,49 +222,49 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         tblRiwayat.getColumnModel().getColumn(2).setPreferredWidth(80);
         tblRiwayat.getColumnModel().getColumn(3).setPreferredWidth(80);
 
-        // Format kolom TGL (Dibuat BOLD)
+        // Format kolom TGL
         tblRiwayat.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setHorizontalAlignment(SwingConstants.LEFT);
                 setFont(new Font("Segoe UI", Font.PLAIN, 12)); 
-                setForeground(new Color(15, 23, 42));        // Hitam tegas
+                setForeground(new Color(15, 23, 42));
                 setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
                 return c;
             }
         });
 
-        // Format kolom BATCH (Dibuat BOLD)
+        // Format kolom BATCH
         tblRiwayat.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setFont(new Font("Segoe UI", Font.BOLD, 12)); // BOLD
-                setForeground(new Color(15, 23, 42));        // Hitam tegas
+                setFont(new Font("Segoe UI", Font.BOLD, 12));
+                setForeground(new Color(15, 23, 42));
                 return c;
             }
         });
 
-        // Format kolom SEMEN (Dibuat BOLD)
+        // Format kolom SEMEN
         tblRiwayat.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setFont(new Font("Segoe UI", Font.BOLD, 12)); // BOLD
-                setForeground(new Color(15, 23, 42));        // Hitam tegas
+                setFont(new Font("Segoe UI", Font.BOLD, 12));
+                setForeground(new Color(15, 23, 42));
                 return c;
             }
         });
 
-        // Format kolom MASUK (Dibuat BOLD Hijau)
+        // Format kolom MASUK
         tblRiwayat.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 setHorizontalAlignment(SwingConstants.RIGHT);
-                setFont(new Font("Segoe UI", Font.BOLD, 12)); // BOLD
-                setForeground(new Color(22, 163, 74));        // Hijau tegas
+                setFont(new Font("Segoe UI", Font.BOLD, 12));
+                setForeground(new Color(22, 163, 74));
                 setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 15));
                 return c;
             }
@@ -429,7 +413,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
         btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
-        btnLogout.setText("Logout");
+        btnLogout.setText("KELUAR");
         btnLogout.setBorderPainted(false);
         btnLogout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnLogout.setFocusPainted(false);
@@ -480,13 +464,13 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         panelKonten.setBackground(new java.awt.Color(248, 250, 252));
 
         lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
+        lblHeaderTitle.setForeground(new java.awt.Color(15, 23, 23));
         lblHeaderTitle.setText("Tambah Stok Semen");
 
         panelCardForm.setBackground(new java.awt.Color(255, 255, 255));
 
         lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblFormTitle.setForeground(new java.awt.Color(15, 15, 23));
+        lblFormTitle.setForeground(new java.awt.Color(15, 23, 23));
         lblFormTitle.setText("Form Pasokan Semen Masuk");
 
         lblPilihVarian.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
@@ -516,7 +500,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         lblAuditHeader.setText("AUDIT PENERIMAAN GUDANG:");
 
         lblPetugasNama.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
-        lblPetugasNama.setForeground(new java.awt.Color(15, 15, 23));
+        lblPetugasNama.setForeground(new java.awt.Color(15, 23, 23));
         lblPetugasNama.setText("Petugas: Admin Gudang");
 
         javax.swing.GroupLayout panelAuditLayout = new javax.swing.GroupLayout(panelAudit);
@@ -548,7 +532,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
 
         lblValidasiText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblValidasiText.setForeground(new java.awt.Color(25, 100, 35));
-        lblValidasiText.setText("<html>• Nominal harus berupa bilangan bulat positif.<br>• Stok fisik semen langsung bertambah di tabel semen.</html>");
+        lblValidasiText.setText("<html>&#x2022; Nominal harus berupa bilangan bulat positif.<br>&#x2022; Stok fisik semen langsung bertambah di tabel semen.</html>");
 
         javax.swing.GroupLayout panelValidasiLayout = new javax.swing.GroupLayout(panelValidasi);
         panelValidasi.setLayout(panelValidasiLayout);
@@ -635,7 +619,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         panelCardTabel.setBackground(new java.awt.Color(255, 255, 255));
 
         lblTabelTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblTabelTitle.setForeground(new java.awt.Color(15, 15, 23));
+        lblTabelTitle.setForeground(new java.awt.Color(15, 23, 34));
         lblTabelTitle.setText("Riwayat Pasokan Semen Masuk");
 
         jScrollPaneTabel.setBorder(null);
@@ -696,7 +680,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
                         .addComponent(panelCardForm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(20, 20, 20)
                         .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(27, Short.MAX_VALUE))
         );
         panelKontenLayout.setVerticalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -707,7 +691,7 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(panelCardForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelCardTabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(45, Short.MAX_VALUE))
         );
 
         getContentPane().add(panelKonten, java.awt.BorderLayout.CENTER);
@@ -765,12 +749,11 @@ public class FormTambahStokSemen extends javax.swing.JFrame {
         int idAdmin = (userAktif != null) ? userAktif.getIdPengguna() : 16;
 
         try {
-            // Cukup panggil service layer
-            boolean sukses = semenService.catatPasokanMasuk(varian.getId(), batch, jumlah, idAdmin);
+            boolean sukses = semenDAO.catatPasokanMasuk(varian.getSemen().getIdSemen(), batch, jumlah, idAdmin);
 
             if (sukses) {
                 JOptionPane.showMessageDialog(this,
-                        "Pasokan sebanyak " + formatRupiah(jumlah) + " " + varian.getSatuan() + " berhasil ditambahkan!\n" +
+                        "Pasokan sebanyak " + formatRupiah(jumlah) + " " + varian.getSemen().getSatuan() + " berhasil ditambahkan!\n" +
                         "Batch: " + batch + "\nStok semen di database telah diperbarui.",
                         "Penyimpanan Berhasil",
                         JOptionPane.INFORMATION_MESSAGE);

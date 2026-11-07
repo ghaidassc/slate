@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
 /**
@@ -16,6 +12,8 @@ public class Semen {
     private int stok;
     private int batasAman;
 
+    public Semen() {}
+
     public Semen(int idSemen, String namaSemen, String satuan, double hargaJual, int stok, int batasAman) {
         this.idSemen = idSemen;
         this.namaSemen = namaSemen;
@@ -26,9 +24,20 @@ public class Semen {
     }
 
     public int getIdSemen() { return idSemen; }
+    public void setIdSemen(int idSemen) { this.idSemen = idSemen; }
+
     public String getNamaSemen() { return namaSemen; }
+    public void setNamaSemen(String namaSemen) { this.namaSemen = namaSemen; }
+
     public String getSatuan() { return satuan; }
+    public void setSatuan(String satuan) { this.satuan = satuan; }
+
     public double getHargaJual() { return hargaJual; }
+    public void setHargaJual(double hargaJual) { this.hargaJual = hargaJual; }
+
     public int getStok() { return stok; }
+    public void setStok(int stok) { this.stok = stok; }
+
     public int getBatasAman() { return batasAman; }
+    public void setBatasAman(int batasAman) { this.batasAman = batasAman; }
 }

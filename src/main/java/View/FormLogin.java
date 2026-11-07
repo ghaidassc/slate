@@ -307,6 +307,18 @@ public class FormLogin extends javax.swing.JFrame {
                             "Login Berhasil! Selamat datang, " + user.getNamaLengkap(),
                             "Sukses",
                             JOptionPane.INFORMATION_MESSAGE);
+                    
+                    try {
+                        FormMenuStaf menuStaf = new FormMenuStaf();
+                        menuStaf.setVisible(true);
+                        this.dispose();
+                    } catch (Throwable t) {
+                        t.printStackTrace(); // Menampilkan error baris kode ke Output NetBeans
+                        JOptionPane.showMessageDialog(this, 
+                            "Gagal membuka Menu Staf: " + t.getMessage(), 
+                            "Error Inisialisasi", 
+                            JOptionPane.ERROR_MESSAGE);
+                    }
 
                     new FormMenuStaf().setVisible(true);
                     this.dispose();

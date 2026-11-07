@@ -1,8 +1,13 @@
 package view;
 
-import Config.Koneksi;
+import Model.AdminGudang;
 import Model.Pengguna;
+import Model.Semen;
 import Util.SesiPengguna;
+import dao.AdminGudangDAO;
+import dao.AdminGudangDAOInterface;
+import dao.SemenDAO;
+import dao.SemenDAOInterface;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -14,38 +19,56 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.ArrayList;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 public class FormMenuAdminGudang extends javax.swing.JFrame {
 
+    private final SemenDAOInterface semenDAO;
+    private final AdminGudangDAOInterface adminGudangDAO;
     private DefaultTableModel modelTabel;
 
     public FormMenuAdminGudang() {
+        this.semenDAO = new SemenDAO();
+        this.adminGudangDAO = new AdminGudangDAO();
         initComponents();
+
+        // 1. Kunci ukuran Sidebar persis 240 x 680
+        panelSidebar.setPreferredSize(new Dimension(240, 680));
+        panelSidebar.setMinimumSize(new Dimension(240, 680));
+        panelSidebar.setMaximumSize(new Dimension(240, 32767));
+
+        // 2. Kunci ukuran Window Frame persis 1120 x 700 (Konsisten antar form)
+        this.setSize(1120, 700);
+        this.setPreferredSize(new Dimension(1120, 700));
+        this.setMinimumSize(new Dimension(1120, 700));
+        this.setMaximumSize(new Dimension(1120, 700));
+        this.setResizable(false);
         this.setLocationRelativeTo(null);
+
+        rapikanKomponenCard();
         pasangLogoSidebar();
         tampilkanSesiPengguna();
-        loadDataStokSemen();
-        desainTabelDanBadge();
-        pasangAksiNavigasi();
+
+        modelTabel = (DefaultTableModel) tblStokSemen.getModel();
+        desainTabelModern();
+        muatRingkasanDanStok();
     }
 
-    private static String formatRupiah(double nominal) {
+    private static String formatAngka(double nominal) {
         DecimalFormatSymbols symbols = new DecimalFormatSymbols();
         symbols.setGroupingSeparator('.');
         symbols.setDecimalSeparator(',');
@@ -53,138 +76,29 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         return df.format(nominal);
     }
 
+    private void rapikanKomponenCard() {
+        LineBorder borderCard = new LineBorder(new Color(222, 229, 237), 1, true);
+        panelCardStatistik1.setBorder(borderCard);
+        panelCardStatistik2.setBorder(borderCard);
+        panelCardTabel.setBorder(borderCard);
+    }
+
     private void tampilkanSesiPengguna() {
         try {
-            Pengguna user = SesiPengguna.getPengguna();
-            if (user != null) {
-                lblRoleText.setText(user.getNamaLengkap());
+            Pengguna currentUser = SesiPengguna.getPengguna();
+            if (currentUser != null) {
+                lblRoleText.setText(currentUser.getNamaLengkap());
 
-                // Ambil shift kerja admin gudang dari database
-                String sqlShift = "SELECT shift FROM admin_gudang WHERE id_pengguna = ?";
-                try (Connection conn = Koneksi.getKoneksi();
-                     PreparedStatement ps = conn.prepareStatement(sqlShift)) {
-                    ps.setInt(1, user.getIdPengguna());
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) {
-                            lblShiftText.setText("Shift Kerja: " + rs.getString("shift"));
-                        }
-                    }
+                // Dipisah lewat objek Model & DAO khusus
+                if (currentUser instanceof AdminGudang) {
+                    AdminGudang admin = (AdminGudang) currentUser;
+                    lblShiftText.setText("Shift Kerja: " + admin.getShift());
+                } else {
+                    String shift = adminGudangDAO.getShiftByIdPengguna(currentUser.getIdPengguna());
+                    lblShiftText.setText("Shift Kerja: " + (shift != null ? shift : "Pagi"));
                 }
             }
         } catch (Exception ignored) {}
-    }
-
-    private void loadDataStokSemen() {
-        // Model tabel dengan kolom STATUS STOK
-        String[] kolom = {"ID", "NAMA SEMEN", "SATUAN", "HARGA JUAL", "STOK GUDANG", "BATAS AMAN", "STATUS STOK"};
-        modelTabel = new DefaultTableModel(null, kolom) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        tblStokSemen.setModel(modelTabel);
-
-        String sql = "SELECT id_semen, nama_semen, satuan, harga_jual_rp, stok_qty, batas_aman FROM semen ORDER BY id_semen ASC";
-        ArrayList<String> daftarKritis = new ArrayList<>();
-
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int id = rs.getInt("id_semen");
-                String nama = rs.getString("nama_semen");
-                String satuan = rs.getString("satuan");
-                double harga = rs.getDouble("harga_jual_rp");
-                int stok = rs.getInt("stok_qty");
-                int batas = rs.getInt("batas_aman");
-
-                // Evaluasi stok menipis
-                String statusStok;
-                if (stok <= batas) {
-                    statusStok = "Kritis";
-                    daftarKritis.add(nama + " (Sisa: " + formatRupiah(stok) + " " + satuan + ")");
-                } else {
-                    statusStok = "Aman";
-                }
-
-                modelTabel.addRow(new Object[]{
-                    String.valueOf(id),
-                    nama,
-                    satuan,
-                    "Rp " + formatRupiah(harga),
-                    formatRupiah(stok) + " " + satuan,
-                    formatRupiah(batas) + " " + satuan,
-                    statusStok
-                });
-            }
-
-            // Tampilkan peringatan visual jika ada stok yang menipis
-            if (!daftarKritis.isEmpty()) {
-                lblTabelTitle.setText("<html>Daftar Stok Semen &nbsp;&nbsp;<span style='color:#DC2626; font-size:11px; font-weight:normal;'>⚠️ Perhatian: Ada varian semen di bawah batas aman!</span></html>");
-            } else {
-                lblTabelTitle.setText("Daftar Stok Semen");
-            }
-
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Gagal memuat data stok semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void pasangAksiNavigasi() {
-        // Logout
-        btnLogout.addActionListener(evt -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Apakah Anda yakin ingin keluar?",
-                    "Konfirmasi Logout",
-                    JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                SesiPengguna.setPengguna(null);
-                new FormLogin().setVisible(true);
-                dispose();
-            }
-        });
-
-        // 1. Tambah Stok Semen
-        btnNavTambahStok.addActionListener(evt -> {
-            new FormTambahStokSemen().setVisible(true);
-            dispose();
-        });
-        cardMenu1.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new FormTambahStokSemen().setVisible(true);
-                dispose();
-            }
-        });
-
-        // 2. Ubah Data Semen
-        btnNavUbahData.addActionListener(evt -> {
-            new FormUbahDataSemen().setVisible(true);
-            dispose();
-        });
-        cardMenu2.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new FormUbahDataSemen().setVisible(true);
-                dispose();
-            }
-        });
-
-        // 3. Tambah / Hapus Semen
-        btnNavKelolaSemen.addActionListener(evt -> {
-            new FormKelolaSemen().setVisible(true);
-            dispose();
-        });
-        cardMenu3.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                new FormKelolaSemen().setVisible(true);
-                dispose();
-            }
-        });
     }
 
     private void pasangLogoSidebar() {
@@ -212,106 +126,105 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
             }
 
             if (imgAsli != null) {
-                int rgbPojok = imgAsli.getRGB(0, 0);
-                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                panelSidebar.setBackground(warnaAsliLogo);
-
                 Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
                 lblLogoSidebar.setIcon(new ImageIcon(imgResized));
                 lblLogoSidebar.setText("");
             } else {
-                lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
+                lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:22px; font-weight:bold; letter-spacing:2px;'>S L A T E</span></center></html>");
             }
         } catch (Exception e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
     }
 
-    private void desainTabelDanBadge() {
+    private void desainTabelModern() {
         JTableHeader header = tblStokSemen.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 11));
         header.setBackground(new Color(241, 245, 249));
         header.setForeground(new Color(71, 85, 105));
-        header.setPreferredSize(new Dimension(header.getWidth(), 38));
+        header.setPreferredSize(new Dimension(header.getWidth(), 42));
+        header.setReorderingAllowed(false);
 
-        tblStokSemen.getColumnModel().getColumn(0).setPreferredWidth(35);  // ID
-        tblStokSemen.getColumnModel().getColumn(1).setPreferredWidth(170); // NAMA SEMEN
-        tblStokSemen.getColumnModel().getColumn(2).setPreferredWidth(60);  // SATUAN
-        tblStokSemen.getColumnModel().getColumn(3).setPreferredWidth(100); // HARGA JUAL
-        tblStokSemen.getColumnModel().getColumn(4).setPreferredWidth(110); // STOK GUDANG
-        tblStokSemen.getColumnModel().getColumn(5).setPreferredWidth(95);  // BATAS AMAN
-        tblStokSemen.getColumnModel().getColumn(6).setPreferredWidth(95);  // STATUS STOK
+        tblStokSemen.getColumnModel().getColumn(0).setPreferredWidth(45);
+        tblStokSemen.getColumnModel().getColumn(1).setPreferredWidth(170);
+        tblStokSemen.getColumnModel().getColumn(2).setPreferredWidth(70);
+        tblStokSemen.getColumnModel().getColumn(3).setPreferredWidth(110);
+        tblStokSemen.getColumnModel().getColumn(4).setPreferredWidth(110);
+        tblStokSemen.getColumnModel().getColumn(5).setPreferredWidth(110);
+        tblStokSemen.getColumnModel().getColumn(6).setPreferredWidth(100);
 
-        // Kolom ID
+        // Kolom 0: ID
         tblStokSemen.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
                 setHorizontalAlignment(SwingConstants.CENTER);
                 setFont(new Font("Segoe UI", Font.BOLD, 12));
+                setForeground(new Color(15, 23, 42));
                 return c;
             }
         });
 
-        // Kolom Nama Semen
+        // Kolom 1: NAMA SEMEN
         tblStokSemen.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setFont(new Font("Segoe UI", Font.BOLD, 12));
-                setForeground(new Color(15, 23, 42));
-                setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
-                return c;
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                lbl.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                lbl.setForeground(new Color(15, 23, 42));
+                lbl.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+                return lbl;
             }
         });
 
-        // Kolom Satuan
+        // Kolom 2: SATUAN
         tblStokSemen.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                setHorizontalAlignment(SwingConstants.LEFT);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                setHorizontalAlignment(SwingConstants.CENTER);
                 setFont(new Font("Segoe UI", Font.BOLD, 12));
                 setForeground(new Color(15, 23, 42));
-                setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 0));
                 return c;
             }
         });
 
-        // Kolom Harga Jual
+        // Kolom 3: HARGA JUAL
         tblStokSemen.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                setHorizontalAlignment(SwingConstants.CENTER);
                 setFont(new Font("Segoe UI", Font.BOLD, 12));
                 setForeground(new Color(15, 23, 42));
                 return c;
             }
         });
 
-        // Kolom Stok Gudang (Ubah menjadi teks hitam tegas)
+        // Kolom 4: STOK GUDANG
         tblStokSemen.getColumnModel().getColumn(4).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                setHorizontalAlignment(SwingConstants.CENTER);
                 setFont(new Font("Segoe UI", Font.BOLD, 12));
-                setForeground(new Color(15, 23, 42)); // Hitam tegas (#0F172A)
+                setForeground(new Color(15, 23, 42));
                 return c;
             }
         });
 
-        // Kolom Batas Aman (Badge Lembut Abu)
+        // Kolom 5: BATAS AMAN
         tblStokSemen.getColumnModel().getColumn(5).setCellRenderer(new BatasAmanBadgeRenderer());
 
-        // Kolom Status Stok (Badge Pill Hijau / Merah Kritis)
-        tblStokSemen.getColumnModel().getColumn(6).setCellRenderer(new StatusStokRenderer());
+        // Kolom 6: STATUS STOK
+        tblStokSemen.getColumnModel().getColumn(6).setCellRenderer(new StatusStokBadgeRenderer());
     }
 
     private static class BatasAmanBadgeRenderer extends DefaultTableCellRenderer {
         private String textNilai = "";
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
             textNilai = (value != null) ? value.toString().trim() : "";
             return this;
         }
@@ -321,15 +234,15 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            int lebarPill = 84;
-            int tinggiPill = 22;
+            int lebarPill = 82;
+            int tinggiPill = 24;
             int x = (getWidth() - lebarPill) / 2;
             int y = (getHeight() - tinggiPill) / 2;
 
             g2.setColor(new Color(241, 245, 249));
-            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 10, 10);
+            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 6, 6);
 
-            g2.setColor(new Color(71, 85, 105));
+            g2.setColor(new Color(30, 41, 59));
             g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
             int lebarTeks = g2.getFontMetrics().stringWidth(textNilai);
             int tinggiFont = g2.getFontMetrics().getAscent();
@@ -341,22 +254,24 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         }
     }
 
-    // Renderer Status Stok Kritis / Aman
-    private static class StatusStokRenderer extends DefaultTableCellRenderer {
-        private String textNilai = "";
-        private Color warnaBg = Color.LIGHT_GRAY;
-        private Color warnaTeks = Color.BLACK;
+    private static class StatusStokBadgeRenderer extends DefaultTableCellRenderer {
+        private String textNilai = "Aman";
+        private Color warnaBg = new Color(220, 252, 231);
+        private Color warnaTeks = new Color(22, 101, 52);
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            textNilai = (value != null) ? value.toString().trim() : "";
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            textNilai = (value != null) ? value.toString().trim() : "Aman";
 
-            if ("Kritis".equalsIgnoreCase(textNilai)) {
-                warnaBg = new Color(254, 226, 226); // Merah muda
-                warnaTeks = new Color(185, 28, 28); // Merah gelap
+            if ("Aman".equalsIgnoreCase(textNilai)) {
+                warnaBg = new Color(220, 252, 231);
+                warnaTeks = new Color(22, 101, 52);
+            } else if ("Menipis".equalsIgnoreCase(textNilai)) {
+                warnaBg = new Color(254, 243, 199);
+                warnaTeks = new Color(180, 83, 9);
             } else {
-                warnaBg = new Color(220, 252, 231); // Hijau muda
-                warnaTeks = new Color(22, 101, 52); // Hijau gelap
+                warnaBg = new Color(254, 226, 226);
+                warnaTeks = new Color(185, 28, 28);
             }
             return this;
         }
@@ -367,15 +282,15 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             int lebarPill = 76;
-            int tinggiPill = 22;
+            int tinggiPill = 24;
             int x = (getWidth() - lebarPill) / 2;
             int y = (getHeight() - tinggiPill) / 2;
 
             g2.setColor(warnaBg);
-            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 10, 10);
+            g2.fillRoundRect(x, y, lebarPill, tinggiPill, 6, 6);
 
             g2.setColor(warnaTeks);
-            g2.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            g2.setFont(new Font("Segoe UI", Font.BOLD, 11));
             int lebarTeks = g2.getFontMetrics().stringWidth(textNilai);
             int tinggiFont = g2.getFontMetrics().getAscent();
             int xTeks = x + (lebarPill - lebarTeks) / 2;
@@ -383,6 +298,49 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
             g2.drawString(textNilai, xTeks, yTeks);
 
             g2.dispose();
+        }
+    }
+
+    public void muatRingkasanDanStok() {
+        // 1. Muat Kartu Ringkasan lewat DAO
+        try {
+            String cepatHabis = semenDAO.getProdukPalingCepatHabis();
+            int totalKeluar = semenDAO.getTotalSemenKeluarHariIni();
+
+            lblNamaSemenCepatHabis.setText(cepatHabis);
+            lblTotalSemenKeluar.setText(formatAngka(totalKeluar) + " Sak");
+        } catch (SQLException ignored) {}
+
+        // 2. Muat Tabel Semen lewat DAO (getAll())
+        modelTabel.setRowCount(0);
+        try {
+            List<Semen> list = semenDAO.getAll();
+            for (Semen s : list) {
+                String satuan = s.getSatuan();
+                int stok = s.getStok();
+                int batas = s.getBatasAman();
+
+                String status;
+                if (stok <= batas / 2) {
+                    status = "Kritis";
+                } else if (stok <= batas) {
+                    status = "Menipis";
+                } else {
+                    status = "Aman";
+                }
+
+                modelTabel.addRow(new Object[]{
+                    s.getIdSemen(),
+                    s.getNamaSemen(),
+                    satuan,
+                    "Rp " + formatAngka(s.getHargaJual()),
+                    formatAngka(stok) + " " + satuan,
+                    formatAngka(batas) + " " + satuan,
+                    status
+                });
+            }
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(this, "Gagal memuat daftar stok semen: " + e.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -402,30 +360,31 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         btnNavKelolaSemen = new javax.swing.JButton();
         btnLogout = new javax.swing.JButton();
         panelKonten = new javax.swing.JPanel();
-        lblHeaderTitle = new javax.swing.JLabel();
-        cardMenu1 = new javax.swing.JPanel();
-        boxBadge1 = new javax.swing.JPanel();
-        lblAngka1 = new javax.swing.JLabel();
-        lblTextCard1 = new javax.swing.JLabel();
-        cardMenu2 = new javax.swing.JPanel();
-        boxBadge2 = new javax.swing.JPanel();
-        lblAngka2 = new javax.swing.JLabel();
-        lblTextCard2 = new javax.swing.JLabel();
-        cardMenu3 = new javax.swing.JPanel();
-        boxBadge3 = new javax.swing.JPanel();
-        lblAngka3 = new javax.swing.JLabel();
-        lblTextCard3 = new javax.swing.JLabel();
+        lblJudulHalaman = new javax.swing.JLabel();
+        panelCardStatistik1 = new javax.swing.JPanel();
+        barisAksenOrange = new javax.swing.JPanel();
+        lblKategoriCepatHabis = new javax.swing.JLabel();
+        lblNamaSemenCepatHabis = new javax.swing.JLabel();
+        lblKeteranganOrange = new javax.swing.JLabel();
+        panelCardStatistik2 = new javax.swing.JPanel();
+        barisAksenBiru = new javax.swing.JPanel();
+        lblKategoriTotalKeluar = new javax.swing.JLabel();
+        lblTotalSemenKeluar = new javax.swing.JLabel();
+        lblKeteranganBiru = new javax.swing.JLabel();
+        lblSubJudulTabel = new javax.swing.JLabel();
         panelCardTabel = new javax.swing.JPanel();
-        lblTabelTitle = new javax.swing.JLabel();
         jScrollPaneTabel = new javax.swing.JScrollPane();
         tblStokSemen = new javax.swing.JTable();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("SLATE - Menu Admin Gudang");
-        setPreferredSize(new java.awt.Dimension(1080, 680));
+        setTitle("Menu Admin Gudang (Daftar Stok Semen)");
+        setMinimumSize(new java.awt.Dimension(1120, 700));
+        setPreferredSize(new java.awt.Dimension(1120, 700));
         setResizable(false);
 
         panelSidebar.setBackground(new java.awt.Color(22, 27, 34));
+        panelSidebar.setMaximumSize(new java.awt.Dimension(240, 32767));
+        panelSidebar.setMinimumSize(new java.awt.Dimension(240, 680));
         panelSidebar.setPreferredSize(new java.awt.Dimension(240, 680));
 
         lblLogoSidebar.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -433,7 +392,7 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         panelBadgeUser.setBackground(new java.awt.Color(33, 39, 50));
 
         lblDotStatus.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblDotStatus.setForeground(new java.awt.Color(32, 128, 255));
+        lblDotStatus.setForeground(new java.awt.Color(37, 107, 235));
         lblDotStatus.setText("●");
 
         lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -487,6 +446,11 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         btnNavTambahStok.setFocusPainted(false);
         btnNavTambahStok.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnNavTambahStok.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavTambahStok.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavTambahStokActionPerformed(evt);
+            }
+        });
 
         btnNavUbahData.setBackground(new java.awt.Color(22, 27, 34));
         btnNavUbahData.setForeground(new java.awt.Color(134, 148, 160));
@@ -496,6 +460,11 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         btnNavUbahData.setFocusPainted(false);
         btnNavUbahData.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnNavUbahData.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavUbahData.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavUbahDataActionPerformed(evt);
+            }
+        });
 
         btnNavKelolaSemen.setBackground(new java.awt.Color(22, 27, 34));
         btnNavKelolaSemen.setForeground(new java.awt.Color(134, 148, 160));
@@ -505,14 +474,24 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         btnNavKelolaSemen.setFocusPainted(false);
         btnNavKelolaSemen.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         btnNavKelolaSemen.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavKelolaSemen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnNavKelolaSemenActionPerformed(evt);
+            }
+        });
 
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
         btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
-        btnLogout.setText("Logout");
+        btnLogout.setText("Keluar");
         btnLogout.setBorderPainted(false);
         btnLogout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnLogout.setFocusPainted(false);
+        btnLogout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnLogoutActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout panelSidebarLayout = new javax.swing.GroupLayout(panelSidebar);
         panelSidebar.setLayout(panelSidebarLayout);
@@ -545,142 +524,153 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
                 .addComponent(btnNavUbahData, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavKelolaSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
                 .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
 
         getContentPane().add(panelSidebar, java.awt.BorderLayout.WEST);
 
-        panelKonten.setBackground(new java.awt.Color(248, 250, 252));
+        panelKonten.setBackground(new java.awt.Color(255, 255, 255));
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
-        lblHeaderTitle.setText("Menu Admin Gudang");
+        lblJudulHalaman.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
+        lblJudulHalaman.setForeground(new java.awt.Color(15, 23, 42));
+        lblJudulHalaman.setText("Menu Admin Gudang");
 
-        cardMenu1.setBackground(new java.awt.Color(255, 255, 255));
-        cardMenu1.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        cardMenu1.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        panelCardStatistik1.setBackground(new java.awt.Color(255, 255, 255));
 
-        boxBadge1.setBackground(new java.awt.Color(255, 234, 232));
-        boxBadge1.setLayout(new java.awt.GridBagLayout());
+        barisAksenOrange.setBackground(new java.awt.Color(234, 88, 12));
 
-        lblAngka1.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblAngka1.setForeground(new java.awt.Color(234, 43, 43));
-        lblAngka1.setText("1");
-        boxBadge1.add(lblAngka1, new java.awt.GridBagConstraints());
-
-        lblTextCard1.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblTextCard1.setForeground(new java.awt.Color(15, 15, 23));
-        lblTextCard1.setText("Tambah Stok Semen");
-
-        javax.swing.GroupLayout cardMenu1Layout = new javax.swing.GroupLayout(cardMenu1);
-        cardMenu1.setLayout(cardMenu1Layout);
-        cardMenu1Layout.setHorizontalGroup(
-            cardMenu1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cardMenu1Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(boxBadge1, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(16, 16, 16)
-                .addComponent(lblTextCard1, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(18, Short.MAX_VALUE))
+        javax.swing.GroupLayout barisAksenOrangeLayout = new javax.swing.GroupLayout(barisAksenOrange);
+        barisAksenOrange.setLayout(barisAksenOrangeLayout);
+        barisAksenOrangeLayout.setHorizontalGroup(
+            barisAksenOrangeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        cardMenu1Layout.setVerticalGroup(
-            cardMenu1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cardMenu1Layout.createSequentialGroup()
+        barisAksenOrangeLayout.setVerticalGroup(
+            barisAksenOrangeLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 4, Short.MAX_VALUE)
+        );
+
+        lblKategoriCepatHabis.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        lblKategoriCepatHabis.setForeground(new java.awt.Color(100, 116, 139));
+        lblKategoriCepatHabis.setText("Paling Cepat Habis");
+
+        lblNamaSemenCepatHabis.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        lblNamaSemenCepatHabis.setForeground(new java.awt.Color(15, 23, 42));
+        lblNamaSemenCepatHabis.setText("Semen Sak 50kg (PCC)");
+
+        lblKeteranganOrange.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        lblKeteranganOrange.setForeground(new java.awt.Color(234, 88, 12));
+        lblKeteranganOrange.setText("Permintaan toko paling tinggi");
+
+        javax.swing.GroupLayout panelCardStatistik1Layout = new javax.swing.GroupLayout(panelCardStatistik1);
+        panelCardStatistik1.setLayout(panelCardStatistik1Layout);
+        panelCardStatistik1Layout.setHorizontalGroup(
+            panelCardStatistik1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(barisAksenOrange, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(panelCardStatistik1Layout.createSequentialGroup()
                 .addGap(18, 18, 18)
-                .addGroup(cardMenu1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(boxBadge1, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
-                    .addComponent(lblTextCard1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(19, Short.MAX_VALUE))
+                .addGroup(panelCardStatistik1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblKeteranganOrange, javax.swing.GroupLayout.PREFERRED_SIZE, 340, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblNamaSemenCepatHabis, javax.swing.GroupLayout.PREFERRED_SIZE, 350, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblKategoriCepatHabis, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(27, Short.MAX_VALUE))
+        );
+        panelCardStatistik1Layout.setVerticalGroup(
+            panelCardStatistik1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelCardStatistik1Layout.createSequentialGroup()
+                .addComponent(barisAksenOrange, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(14, 14, 14)
+                .addComponent(lblKategoriCepatHabis)
+                .addGap(6, 6, 6)
+                .addComponent(lblNamaSemenCepatHabis)
+                .addGap(8, 8, 8)
+                .addComponent(lblKeteranganOrange)
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
-        cardMenu2.setBackground(new java.awt.Color(255, 255, 255));
-        cardMenu2.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        cardMenu2.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        panelCardStatistik2.setBackground(new java.awt.Color(255, 255, 255));
 
-        boxBadge2.setBackground(new java.awt.Color(254, 237, 221));
-        boxBadge2.setLayout(new java.awt.GridBagLayout());
+        barisAksenBiru.setBackground(new java.awt.Color(37, 100, 230));
 
-        lblAngka2.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblAngka2.setForeground(new java.awt.Color(234, 88, 12));
-        lblAngka2.setText("2");
-        boxBadge2.add(lblAngka2, new java.awt.GridBagConstraints());
-
-        lblTextCard2.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblTextCard2.setForeground(new java.awt.Color(15, 15, 23));
-        lblTextCard2.setText("Ubah Data Semen");
-
-        javax.swing.GroupLayout cardMenu2Layout = new javax.swing.GroupLayout(cardMenu2);
-        cardMenu2.setLayout(cardMenu2Layout);
-        cardMenu2Layout.setHorizontalGroup(
-            cardMenu2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cardMenu2Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(boxBadge2, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(16, 16, 16)
-                .addComponent(lblTextCard2, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(18, Short.MAX_VALUE))
+        javax.swing.GroupLayout barisAksenBiruLayout = new javax.swing.GroupLayout(barisAksenBiru);
+        barisAksenBiru.setLayout(barisAksenBiruLayout);
+        barisAksenBiruLayout.setHorizontalGroup(
+            barisAksenBiruLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 0, Short.MAX_VALUE)
         );
-        cardMenu2Layout.setVerticalGroup(
-            cardMenu2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cardMenu2Layout.createSequentialGroup()
+        barisAksenBiruLayout.setVerticalGroup(
+            barisAksenBiruLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 4, Short.MAX_VALUE)
+        );
+
+        lblKategoriTotalKeluar.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        lblKategoriTotalKeluar.setForeground(new java.awt.Color(100, 116, 139));
+        lblKategoriTotalKeluar.setText("Total Semen Keluar Hari Ini");
+
+        lblTotalSemenKeluar.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
+        lblTotalSemenKeluar.setForeground(new java.awt.Color(15, 23, 42));
+        lblTotalSemenKeluar.setText("1.250 Sak");
+
+        lblKeteranganBiru.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        lblKeteranganBiru.setForeground(new java.awt.Color(37, 100, 230));
+        lblKeteranganBiru.setText("Dari transaksi yang diproses");
+
+        javax.swing.GroupLayout panelCardStatistik2Layout = new javax.swing.GroupLayout(panelCardStatistik2);
+        panelCardStatistik2.setLayout(panelCardStatistik2Layout);
+        panelCardStatistik2Layout.setHorizontalGroup(
+            panelCardStatistik2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(barisAksenBiru, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(panelCardStatistik2Layout.createSequentialGroup()
                 .addGap(18, 18, 18)
-                .addGroup(cardMenu2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(boxBadge2, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
-                    .addComponent(lblTextCard2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(19, Short.MAX_VALUE))
+                .addGroup(panelCardStatistik2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(lblKeteranganBiru, javax.swing.GroupLayout.PREFERRED_SIZE, 340, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblTotalSemenKeluar, javax.swing.GroupLayout.PREFERRED_SIZE, 350, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblKategoriTotalKeluar, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(37, Short.MAX_VALUE))
+        );
+        panelCardStatistik2Layout.setVerticalGroup(
+            panelCardStatistik2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(panelCardStatistik2Layout.createSequentialGroup()
+                .addComponent(barisAksenBiru, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(14, 14, 14)
+                .addComponent(lblKategoriTotalKeluar)
+                .addGap(4, 4, 4)
+                .addComponent(lblTotalSemenKeluar)
+                .addGap(6, 6, 6)
+                .addComponent(lblKeteranganBiru)
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
-        cardMenu3.setBackground(new java.awt.Color(255, 255, 255));
-        cardMenu3.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
-        cardMenu3.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-
-        boxBadge3.setBackground(new java.awt.Color(254, 244, 215));
-        boxBadge3.setLayout(new java.awt.GridBagLayout());
-
-        lblAngka3.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblAngka3.setForeground(new java.awt.Color(180, 131, 9));
-        lblAngka3.setText("3");
-        boxBadge3.add(lblAngka3, new java.awt.GridBagConstraints());
-
-        lblTextCard3.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblTextCard3.setForeground(new java.awt.Color(15, 15, 23));
-        lblTextCard3.setText("Tambah/Hapus Semen");
-
-        javax.swing.GroupLayout cardMenu3Layout = new javax.swing.GroupLayout(cardMenu3);
-        cardMenu3.setLayout(cardMenu3Layout);
-        cardMenu3Layout.setHorizontalGroup(
-            cardMenu3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cardMenu3Layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(boxBadge3, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(16, 16, 16)
-                .addComponent(lblTextCard3, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(18, Short.MAX_VALUE))
-        );
-        cardMenu3Layout.setVerticalGroup(
-            cardMenu3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(cardMenu3Layout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addGroup(cardMenu3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(boxBadge3, javax.swing.GroupLayout.DEFAULT_SIZE, 36, Short.MAX_VALUE)
-                    .addComponent(lblTextCard3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(19, Short.MAX_VALUE))
-        );
+        lblSubJudulTabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        lblSubJudulTabel.setForeground(new java.awt.Color(15, 23, 42));
+        lblSubJudulTabel.setText("Daftar Stok Semen");
 
         panelCardTabel.setBackground(new java.awt.Color(255, 255, 255));
-        panelCardTabel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(226, 232, 240), 1, true));
 
-        lblTabelTitle.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
-        lblTabelTitle.setForeground(new java.awt.Color(15, 15, 23));
-        lblTabelTitle.setText("Daftar Stok Semen");
-
+        jScrollPaneTabel.setBackground(new java.awt.Color(255, 255, 255));
         jScrollPaneTabel.setBorder(null);
 
+        tblStokSemen.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "ID", "NAMA SEMEN", "SATUAN", "HARGA JUAL", "STOK GUDANG", "BATAS AMAN", "STATUS STOK"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
         tblStokSemen.setRowHeight(54);
-        tblStokSemen.setSelectionBackground(new java.awt.Color(241, 245, 249));
-        tblStokSemen.setSelectionForeground(new java.awt.Color(15, 23, 42));
+        tblStokSemen.setSelectionBackground(new java.awt.Color(235, 241, 247));
+        tblStokSemen.setSelectionForeground(new java.awt.Color(26, 31, 38));
         tblStokSemen.setShowGrid(false);
         jScrollPaneTabel.setViewportView(tblStokSemen);
 
@@ -688,21 +678,11 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         panelCardTabel.setLayout(panelCardTabelLayout);
         panelCardTabelLayout.setHorizontalGroup(
             panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelCardTabelLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addGroup(panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblTabelTitle)
-                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 696, Short.MAX_VALUE))
-                .addGap(25, 25, 25))
+            .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 820, Short.MAX_VALUE)
         );
         panelCardTabelLayout.setVerticalGroup(
             panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelCardTabelLayout.createSequentialGroup()
-                .addGap(22, 22, 22)
-                .addComponent(lblTabelTitle)
-                .addGap(18, 18, 18)
-                .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
-                .addGap(25, 25, 25))
+            .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout panelKontenLayout = new javax.swing.GroupLayout(panelKonten);
@@ -710,31 +690,31 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         panelKontenLayout.setHorizontalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelKontenLayout.createSequentialGroup()
-                .addGap(35, 35, 35)
+                .addGap(30, 30, 30)
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblJudulHalaman, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(panelKontenLayout.createSequentialGroup()
-                        .addComponent(cardMenu1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(16, 16, 16)
-                        .addComponent(cardMenu2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(16, 16, 16)
-                        .addComponent(cardMenu3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(panelCardStatistik1, javax.swing.GroupLayout.PREFERRED_SIZE, 395, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(20, 20, 20)
+                        .addComponent(panelCardStatistik2, javax.swing.GroupLayout.PREFERRED_SIZE, 405, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(lblSubJudulTabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(panelCardTabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(30, Short.MAX_VALUE))
         );
         panelKontenLayout.setVerticalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelKontenLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(20, 20, 20)
+                .addComponent(lblJudulHalaman, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(16, 16, 16)
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(cardMenu1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cardMenu2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(cardMenu3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(25, 25, 25)
-                .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(panelCardStatistik1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(panelCardStatistik2, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(22, 22, 22)
+                .addComponent(lblSubJudulTabel)
+                .addGap(12, 12, 12)
+                .addComponent(panelCardTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE)
+                .addGap(35, 35, 35))
         );
 
         getContentPane().add(panelKonten, java.awt.BorderLayout.CENTER);
@@ -743,38 +723,69 @@ public class FormMenuAdminGudang extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnNavTambahStokActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavTambahStokActionPerformed
+        new FormTambahStokSemen().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnNavTambahStokActionPerformed
+
+    private void btnNavUbahDataActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavUbahDataActionPerformed
+        new FormUbahDataSemen().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnNavUbahDataActionPerformed
+
+    private void btnNavKelolaSemenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavKelolaSemenActionPerformed
+        new FormKelolaSemen().setVisible(true);
+        this.dispose();
+    }//GEN-LAST:event_btnNavKelolaSemenActionPerformed
+
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
+        int konfirm = JOptionPane.showConfirmDialog(this, "Apakah Anda yakin ingin keluar?", "Konfirmasi Keluar", JOptionPane.YES_NO_OPTION);
+        if (konfirm == JOptionPane.YES_OPTION) {
+            SesiPengguna.setPengguna(null);
+            new FormLogin().setVisible(true);
+            this.dispose();
+        }
+    }//GEN-LAST:event_btnLogoutActionPerformed
+
     public static void main(String args[]) {
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception ignored) {}
+
         java.awt.EventQueue.invokeLater(() -> {
             new FormMenuAdminGudang().setVisible(true);
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JPanel boxBadge1;
-    private javax.swing.JPanel boxBadge2;
-    private javax.swing.JPanel boxBadge3;
+    private javax.swing.JPanel barisAksenBiru;
+    private javax.swing.JPanel barisAksenOrange;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnNavKelolaSemen;
     private javax.swing.JButton btnNavMenu;
     private javax.swing.JButton btnNavTambahStok;
     private javax.swing.JButton btnNavUbahData;
-    private javax.swing.JPanel cardMenu1;
-    private javax.swing.JPanel cardMenu2;
-    private javax.swing.JPanel cardMenu3;
     private javax.swing.JScrollPane jScrollPaneTabel;
-    private javax.swing.JLabel lblAngka1;
-    private javax.swing.JLabel lblAngka2;
-    private javax.swing.JLabel lblAngka3;
     private javax.swing.JLabel lblDotStatus;
-    private javax.swing.JLabel lblHeaderTitle;
+    private javax.swing.JLabel lblJudulHalaman;
+    private javax.swing.JLabel lblKategoriCepatHabis;
+    private javax.swing.JLabel lblKategoriTotalKeluar;
+    private javax.swing.JLabel lblKeteranganBiru;
+    private javax.swing.JLabel lblKeteranganOrange;
     private javax.swing.JLabel lblLogoSidebar;
+    private javax.swing.JLabel lblNamaSemenCepatHabis;
     private javax.swing.JLabel lblRoleText;
     private javax.swing.JLabel lblShiftText;
-    private javax.swing.JLabel lblTabelTitle;
-    private javax.swing.JLabel lblTextCard1;
-    private javax.swing.JLabel lblTextCard2;
-    private javax.swing.JLabel lblTextCard3;
+    private javax.swing.JLabel lblSubJudulTabel;
+    private javax.swing.JLabel lblTotalSemenKeluar;
     private javax.swing.JPanel panelBadgeUser;
+    private javax.swing.JPanel panelCardStatistik1;
+    private javax.swing.JPanel panelCardStatistik2;
     private javax.swing.JPanel panelCardTabel;
     private javax.swing.JPanel panelKonten;
     private javax.swing.JPanel panelSidebar;

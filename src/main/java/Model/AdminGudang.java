@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package Model;
 
 /**
@@ -22,4 +18,5 @@ public class AdminGudang extends Pengguna {
     }
 
     public String getShift() { return shift; }
+    public void setShift(String shift) { this.shift = shift; }
 }

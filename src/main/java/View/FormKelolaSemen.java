@@ -1,8 +1,13 @@
 package view;
 
-import Config.Koneksi;
+import Model.AdminGudang;
 import Model.Pengguna;
+import Model.Semen;
 import Util.SesiPengguna;
+import dao.AdminGudangDAO;
+import dao.AdminGudangDAOInterface;
+import dao.SemenDAO;
+import dao.SemenDAOInterface;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -11,13 +16,10 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -32,30 +34,32 @@ import javax.swing.table.JTableHeader;
 
 public class FormKelolaSemen extends javax.swing.JFrame {
 
+    private final SemenDAOInterface semenDAO;
+    private final AdminGudangDAOInterface adminGudangDAO;
     private DefaultTableModel modelKatalog;
 
     public FormKelolaSemen() {
+        this.semenDAO = new SemenDAO();
+        this.adminGudangDAO = new AdminGudangDAO();
         initComponents();
+
+        panelSidebar.setPreferredSize(new Dimension(240, 680));
+        panelSidebar.setMinimumSize(new Dimension(240, 680));
+        panelSidebar.setMaximumSize(new Dimension(240, 32767));
+        this.setSize(1120, 700);
+        this.setPreferredSize(new Dimension(1120, 700));
+        this.setMinimumSize(new Dimension(1120, 700));
+        this.setMaximumSize(new Dimension(1120, 700));
+        this.setResizable(false);
         this.setLocationRelativeTo(null);
+
         rapikanTampilanTambahan();
         pasangLogoSidebar();
-
         bersihkanFormTambah();
-        txtIdHapus.setText("");
 
         tampilkanSesiPengguna();
         loadTabelKatalogMaster();
         desainTabel();
-
-        // Klik baris pada tabel katalog otomatis mengisi field ID Hapus
-        tblKatalogMaster.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int row = tblKatalogMaster.getSelectedRow();
-                if (row != -1) {
-                    txtIdHapus.setText(tblKatalogMaster.getValueAt(row, 0).toString());
-                }
-            }
-        });
     }
 
     private static String formatRupiah(double nominal) {
@@ -67,6 +71,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
     }
 
     private void bersihkanFormTambah() {
+        txtIdSemen.setText("");
         txtNamaSemen.setText("");
         txtSatuan.setText("");
         txtStokAwal.setText("");
@@ -75,15 +80,20 @@ public class FormKelolaSemen extends javax.swing.JFrame {
     }
 
     private void tampilkanSesiPengguna() {
-    try {
-        Pengguna user = SesiPengguna.getPengguna();
-        if (user instanceof Model.AdminGudang) {
-            Model.AdminGudang admin = (Model.AdminGudang) user;
-            lblRoleText.setText(admin.getNamaLengkap());
-            lblShiftText.setText("Shift Kerja: " + admin.getShift());
-        }
-    } catch (Exception ignored) {}
-}
+        try {
+            Pengguna user = SesiPengguna.getPengguna();
+            if (user != null) {
+                lblRoleText.setText(user.getNamaLengkap());
+                String shift;
+                if (user instanceof AdminGudang) {
+                    shift = ((AdminGudang) user).getShift();
+                } else {
+                    shift = adminGudangDAO.getShiftByIdPengguna(user.getIdPengguna());
+                }
+                lblShiftText.setText("Shift Kerja: " + (shift != null ? shift : "Pagi"));
+            }
+        } catch (Exception ignored) {}
+    }
 
     private void loadTabelKatalogMaster() {
         String[] kolom = {"ID", "NAMA SEMEN", "HARGA JUAL", "STOK"};
@@ -95,22 +105,14 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         };
         tblKatalogMaster.setModel(modelKatalog);
 
-        String sql = "SELECT id_semen, nama_semen, harga_jual_rp, stok_qty FROM semen ORDER BY id_semen ASC";
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int id = rs.getInt("id_semen");
-                String nama = rs.getString("nama_semen");
-                double harga = rs.getDouble("harga_jual_rp");
-                int stok = rs.getInt("stok_qty");
-
+        try {
+            List<Semen> list = semenDAO.getAll();
+            for (Semen s : list) {
                 modelKatalog.addRow(new Object[]{
-                    String.valueOf(id),
-                    nama,
-                    "Rp " + formatRupiah(harga),
-                    formatRupiah(stok)
+                    String.valueOf(s.getIdSemen()),
+                    s.getNamaSemen(),
+                    "Rp " + formatRupiah(s.getHargaJual()),
+                    formatRupiah(s.getStok()) + " " + s.getSatuan()
                 });
             }
         } catch (SQLException ex) {
@@ -122,15 +124,14 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         LineBorder borderCard = new LineBorder(new Color(226, 232, 240), 1, true);
         panelCardForm.setBorder(borderCard);
         panelCardTabel.setBorder(borderCard);
-        panelBoxHapus.setBorder(new LineBorder(new Color(254, 226, 226), 1, true));
 
         EmptyBorder paddingField = new EmptyBorder(0, 10, 0, 10);
+        txtIdSemen.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
         txtNamaSemen.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
         txtSatuan.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
         txtStokAwal.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
         txtHargaJual.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
         txtBatasAman.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
-        txtIdHapus.setBorder(BorderFactory.createCompoundBorder(borderCard, paddingField));
     }
 
     private void pasangLogoSidebar() {
@@ -158,10 +159,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             }
 
             if (imgAsli != null) {
-                int rgbPojok = imgAsli.getRGB(0, 0);
-                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                panelSidebar.setBackground(warnaAsliLogo);
-
                 Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
                 lblLogoSidebar.setIcon(new ImageIcon(imgResized));
                 lblLogoSidebar.setText("");
@@ -185,7 +182,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         tblKatalogMaster.getColumnModel().getColumn(2).setPreferredWidth(110);
         tblKatalogMaster.getColumnModel().getColumn(3).setPreferredWidth(75);
 
-        // Kolom ID
         tblKatalogMaster.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -196,7 +192,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             }
         });
 
-        // Kolom NAMA SEMEN
         tblKatalogMaster.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -208,7 +203,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             }
         });
 
-        // Kolom HARGA JUAL
         tblKatalogMaster.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -219,7 +213,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             }
         });
 
-        // Kolom STOK
         tblKatalogMaster.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -247,12 +240,13 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         btnNavTambahStok = new javax.swing.JButton();
         btnNavUbahData = new javax.swing.JButton();
         btnNavKelolaSemen = new javax.swing.JButton();
-        btnLogout = new javax.swing.JButton();
+        btnKeluar = new javax.swing.JButton();
         panelKonten = new javax.swing.JPanel();
         lblHeaderTitle = new javax.swing.JLabel();
+        btnHapus = new javax.swing.JButton();
         panelCardForm = new javax.swing.JPanel();
-        btnTabTambah = new javax.swing.JButton();
-        btnTabHapus = new javax.swing.JButton();
+        lblIdSemen = new javax.swing.JLabel();
+        txtIdSemen = new javax.swing.JTextField();
         lblNamaSemen = new javax.swing.JLabel();
         txtNamaSemen = new javax.swing.JTextField();
         lblSatuan = new javax.swing.JLabel();
@@ -263,10 +257,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         txtHargaJual = new javax.swing.JTextField();
         lblBatasAman = new javax.swing.JLabel();
         txtBatasAman = new javax.swing.JTextField();
-        panelBoxHapus = new javax.swing.JPanel();
-        lblHapusHeader = new javax.swing.JLabel();
-        txtIdHapus = new javax.swing.JTextField();
-        btnHapus = new javax.swing.JButton();
         btnSimpanTambah = new javax.swing.JButton();
         panelCardTabel = new javax.swing.JPanel();
         lblTabelTitle = new javax.swing.JLabel();
@@ -289,7 +279,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         lblDotStatus.setText("●");
 
         lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblRoleText.setForeground(new java.awt.Color(248, 248, 248));
+        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
         lblRoleText.setText("Admin Gudang");
 
         lblShiftText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
@@ -302,21 +292,21 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBadgeUserLayout.createSequentialGroup()
                 .addGap(12, 12, 12)
-                .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRoleText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblShiftText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         panelBadgeUserLayout.setVerticalGroup(
             panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBadgeUserLayout.createSequentialGroup()
-                .addGap(6, 6, 6)
+                .addGap(8, 8, 8)
                 .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblDotStatus)
                     .addComponent(lblRoleText))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(lblShiftText)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -328,7 +318,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         btnNavMenu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavMenu.setFocusPainted(false);
         btnNavMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavMenu.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavMenu.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavMenuActionPerformed(evt);
@@ -342,7 +332,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         btnNavTambahStok.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavTambahStok.setFocusPainted(false);
         btnNavTambahStok.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavTambahStok.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavTambahStok.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavTambahStok.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavTambahStokActionPerformed(evt);
@@ -356,7 +346,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         btnNavUbahData.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavUbahData.setFocusPainted(false);
         btnNavUbahData.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavUbahData.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavUbahData.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavUbahData.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavUbahDataActionPerformed(evt);
@@ -371,18 +361,18 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         btnNavKelolaSemen.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavKelolaSemen.setFocusPainted(false);
         btnNavKelolaSemen.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavKelolaSemen.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavKelolaSemen.setMargin(new java.awt.Insets(2, 16, 2, 14));
 
-        btnLogout.setBackground(new java.awt.Color(33, 39, 50));
-        btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnLogout.setForeground(new java.awt.Color(239, 68, 68));
-        btnLogout.setText("Logout");
-        btnLogout.setBorderPainted(false);
-        btnLogout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btnLogout.setFocusPainted(false);
-        btnLogout.addActionListener(new java.awt.event.ActionListener() {
+        btnKeluar.setBackground(new java.awt.Color(33, 39, 50));
+        btnKeluar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnKeluar.setForeground(new java.awt.Color(239, 68, 68));
+        btnKeluar.setText("Keluar");
+        btnKeluar.setBorderPainted(false);
+        btnKeluar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnKeluar.setFocusPainted(false);
+        btnKeluar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnLogoutActionPerformed(evt);
+                btnKeluarActionPerformed(evt);
             }
         });
 
@@ -391,25 +381,25 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         panelSidebarLayout.setHorizontalGroup(
             panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelSidebarLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
+                .addGap(16, 16, 16)
                 .addGroup(panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lblLogoSidebar, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE)
+                    .addComponent(lblLogoSidebar, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
                     .addComponent(panelBadgeUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavTambahStok, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavUbahData, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavKelolaSemen, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(15, Short.MAX_VALUE))
+                    .addComponent(btnKeluar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         panelSidebarLayout.setVerticalGroup(
             panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelSidebarLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(lblLogoSidebar, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15)
-                .addComponent(panelBadgeUser, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(25, 25, 25)
+                .addGap(24, 24, 24)
+                .addComponent(lblLogoSidebar, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(panelBadgeUser, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(26, 26, 26)
                 .addComponent(btnNavMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavTambahStok, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -417,8 +407,8 @@ public class FormKelolaSemen extends javax.swing.JFrame {
                 .addComponent(btnNavUbahData, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavKelolaSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
-                .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 230, Short.MAX_VALUE)
+                .addComponent(btnKeluar, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
 
@@ -430,33 +420,24 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
         lblHeaderTitle.setText("Tambah / Hapus Semen");
 
+        btnHapus.setBackground(new java.awt.Color(254, 226, 226));
+        btnHapus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        btnHapus.setForeground(new java.awt.Color(185, 28, 28));
+        btnHapus.setText("Hapus");
+        btnHapus.setBorderPainted(false);
+        btnHapus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnHapus.setFocusPainted(false);
+        btnHapus.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHapusActionPerformed(evt);
+            }
+        });
+
         panelCardForm.setBackground(new java.awt.Color(255, 255, 255));
 
-        btnTabTambah.setBackground(new java.awt.Color(234, 88, 12));
-        btnTabTambah.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnTabTambah.setForeground(new java.awt.Color(255, 255, 255));
-        btnTabTambah.setText("1. Tambah Semen");
-        btnTabTambah.setBorderPainted(false);
-        btnTabTambah.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btnTabTambah.setFocusPainted(false);
-        btnTabTambah.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnTabTambahActionPerformed(evt);
-            }
-        });
-
-        btnTabHapus.setBackground(new java.awt.Color(235, 241, 248));
-        btnTabHapus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnTabHapus.setForeground(new java.awt.Color(71, 85, 105));
-        btnTabHapus.setText("2. Hapus Semen");
-        btnTabHapus.setBorderPainted(false);
-        btnTabHapus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btnTabHapus.setFocusPainted(false);
-        btnTabHapus.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnTabHapusActionPerformed(evt);
-            }
-        });
+        lblIdSemen.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
+        lblIdSemen.setForeground(new java.awt.Color(71, 85, 105));
+        lblIdSemen.setText("ID Semen Baru");
 
         lblNamaSemen.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblNamaSemen.setForeground(new java.awt.Color(71, 85, 105));
@@ -478,51 +459,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         lblBatasAman.setForeground(new java.awt.Color(71, 85, 105));
         lblBatasAman.setText("Batas Aman Peringatan");
 
-        panelBoxHapus.setBackground(new java.awt.Color(248, 250, 252));
-
-        lblHapusHeader.setFont(new java.awt.Font("Segoe UI", 1, 9)); // NOI18N
-        lblHapusHeader.setForeground(new java.awt.Color(220, 28, 28));
-        lblHapusHeader.setText("ID Semen yang Ingin Dihapus");
-
-        btnHapus.setBackground(new java.awt.Color(254, 226, 226));
-        btnHapus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        btnHapus.setForeground(new java.awt.Color(185, 28, 28));
-        btnHapus.setText("Hapus");
-        btnHapus.setBorderPainted(false);
-        btnHapus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        btnHapus.setFocusPainted(false);
-        btnHapus.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnHapusActionPerformed(evt);
-            }
-        });
-
-        javax.swing.GroupLayout panelBoxHapusLayout = new javax.swing.GroupLayout(panelBoxHapus);
-        panelBoxHapus.setLayout(panelBoxHapusLayout);
-        panelBoxHapusLayout.setHorizontalGroup(
-            panelBoxHapusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelBoxHapusLayout.createSequentialGroup()
-                .addGap(12, 12, 12)
-                .addGroup(panelBoxHapusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblHapusHeader)
-                    .addGroup(panelBoxHapusLayout.createSequentialGroup()
-                        .addComponent(txtIdHapus, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(8, 8, 8)
-                        .addComponent(btnHapus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addGap(12, 12, 12))
-        );
-        panelBoxHapusLayout.setVerticalGroup(
-            panelBoxHapusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(panelBoxHapusLayout.createSequentialGroup()
-                .addGap(8, 8, 8)
-                .addComponent(lblHapusHeader)
-                .addGap(6, 6, 6)
-                .addGroup(panelBoxHapusLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtIdHapus, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnHapus, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(10, Short.MAX_VALUE))
-        );
-
         btnSimpanTambah.setBackground(new java.awt.Color(234, 88, 12));
         btnSimpanTambah.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnSimpanTambah.setForeground(new java.awt.Color(255, 255, 255));
@@ -543,36 +479,33 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             .addGroup(panelCardFormLayout.createSequentialGroup()
                 .addGap(20, 20, 20)
                 .addGroup(panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addGroup(panelCardFormLayout.createSequentialGroup()
-                        .addComponent(btnTabTambah, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(10, 10, 10)
-                        .addComponent(btnTabHapus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(lblIdSemen)
+                    .addComponent(txtIdSemen)
                     .addComponent(lblNamaSemen)
                     .addComponent(txtNamaSemen)
                     .addGroup(panelCardFormLayout.createSequentialGroup()
                         .addGroup(panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblSatuan)
-                            .addComponent(txtSatuan, javax.swing.GroupLayout.PREFERRED_SIZE, 154, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(txtSatuan, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(10, 10, 10)
                         .addGroup(panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(lblStokAwal)
-                            .addComponent(txtStokAwal)))
+                            .addComponent(txtStokAwal, javax.swing.GroupLayout.DEFAULT_SIZE, 150, Short.MAX_VALUE)))
                     .addComponent(lblHargaJual)
                     .addComponent(txtHargaJual)
                     .addComponent(lblBatasAman)
                     .addComponent(txtBatasAman)
-                    .addComponent(panelBoxHapus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnSimpanTambah, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnSimpanTambah, javax.swing.GroupLayout.DEFAULT_SIZE, 300, Short.MAX_VALUE))
                 .addContainerGap(20, Short.MAX_VALUE))
         );
         panelCardFormLayout.setVerticalGroup(
             panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardFormLayout.createSequentialGroup()
-                .addGap(18, 18, 18)
-                .addGroup(panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(btnTabTambah, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnTabHapus, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(15, 15, 15)
+                .addGap(20, 20, 20)
+                .addComponent(lblIdSemen)
+                .addGap(5, 5, 5)
+                .addComponent(txtIdSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
                 .addComponent(lblNamaSemen)
                 .addGap(5, 5, 5)
                 .addComponent(txtNamaSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -592,9 +525,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
                 .addComponent(lblBatasAman)
                 .addGap(5, 5, 5)
                 .addComponent(txtBatasAman, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(14, 14, 14)
-                .addComponent(panelBoxHapus, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(14, 14, 14)
+                .addGap(25, 25, 25)
                 .addComponent(btnSimpanTambah, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(25, Short.MAX_VALUE))
         );
@@ -637,16 +568,16 @@ public class FormKelolaSemen extends javax.swing.JFrame {
                 .addGap(20, 20, 20)
                 .addGroup(panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblTabelTitle)
-                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE))
+                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 420, Short.MAX_VALUE))
                 .addGap(20, 20, 20))
         );
         panelCardTabelLayout.setVerticalGroup(
             panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardTabelLayout.createSequentialGroup()
-                .addGap(18, 18, 18)
+                .addGap(20, 20, 20)
                 .addComponent(lblTabelTitle)
-                .addGap(14, 14, 14)
-                .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 481, Short.MAX_VALUE)
+                .addGap(16, 16, 16)
+                .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 445, Short.MAX_VALUE)
                 .addGap(20, 20, 20))
         );
 
@@ -656,24 +587,29 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelKontenLayout.createSequentialGroup()
                 .addGap(35, 35, 35)
-                .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(panelKontenLayout.createSequentialGroup()
+                        .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 450, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(btnHapus, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(panelKontenLayout.createSequentialGroup()
                         .addComponent(panelCardForm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(20, 20, 20)
                         .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(35, Short.MAX_VALUE))
         );
         panelKontenLayout.setVerticalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelKontenLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnHapus, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(15, 15, 15)
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(panelCardForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelCardTabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(35, Short.MAX_VALUE))
         );
 
         getContentPane().add(panelKonten, java.awt.BorderLayout.CENTER);
@@ -697,108 +633,74 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         this.dispose();
     }//GEN-LAST:event_btnNavUbahDataActionPerformed
 
-    private void btnTabTambahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTabTambahActionPerformed
-        btnTabTambah.setBackground(new Color(234, 88, 12));
-        btnTabTambah.setForeground(Color.WHITE);
-        btnTabHapus.setBackground(new Color(235, 241, 248));
-        btnTabHapus.setForeground(new Color(71, 85, 105));
-        txtNamaSemen.requestFocus();
-    }//GEN-LAST:event_btnTabTambahActionPerformed
-
-    private void btnTabHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnTabHapusActionPerformed
-        btnTabHapus.setBackground(new Color(234, 88, 12));
-        btnTabHapus.setForeground(Color.WHITE);
-        btnTabTambah.setBackground(new Color(235, 241, 248));
-        btnTabTambah.setForeground(new Color(71, 85, 105));
-        txtIdHapus.requestFocus();
-    }//GEN-LAST:event_btnTabHapusActionPerformed
-
     private void btnSimpanTambahActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanTambahActionPerformed
+        String idStr = txtIdSemen.getText().trim();
         String nama = txtNamaSemen.getText().trim();
         String satuan = txtSatuan.getText().trim();
         String stokStr = txtStokAwal.getText().trim();
         String hargaStr = txtHargaJual.getText().trim();
         String batasStr = txtBatasAman.getText().trim();
 
-        if (nama.isEmpty() || satuan.isEmpty() || stokStr.isEmpty() || hargaStr.isEmpty() || batasStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Semua isian penambahan semen harus diisi!", "Validasi Formulir", JOptionPane.WARNING_MESSAGE);
+        if (idStr.isEmpty() || nama.isEmpty() || satuan.isEmpty() || stokStr.isEmpty() || hargaStr.isEmpty() || batasStr.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Semua isian formulir termasuk ID Semen Baru harus diisi!", "Validasi Formulir", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
+        int id;
         int stok;
         double harga;
         int batas;
 
         try {
+            id = Integer.parseInt(idStr);
             stok = Integer.parseInt(stokStr);
             harga = Double.parseDouble(hargaStr);
             batas = Integer.parseInt(batasStr);
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Stok, Harga Jual, dan Batas Aman harus berupa angka valid!", "Format Salah", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "ID Semen, Stok, Harga Jual, dan Batas Aman harus berupa angka valid!", "Format Salah", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (stok < 0 || harga <= 0 || batas < 0) {
-            JOptionPane.showMessageDialog(this, "Harga harus > 0, stok dan batas aman minimal 0!", "Validasi Gagal", JOptionPane.WARNING_MESSAGE);
+        if (id <= 0 || stok < 0 || harga <= 0 || batas < 0) {
+            JOptionPane.showMessageDialog(this, "ID dan Harga harus > 0, stok dan batas aman minimal 0!", "Validasi Gagal", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        // Generate ID baru (MAX + 1)
-        int newId = 1;
-        String sqlMax = "SELECT COALESCE(MAX(id_semen), 0) + 1 AS next_id FROM semen";
-        String sqlInsert = "INSERT INTO semen (id_semen, nama_semen, satuan, harga_jual_rp, stok_qty, batas_aman) VALUES (?, ?, ?, ?, ?, ?)";
+        try {
+            Semen s = new Semen(id, nama, satuan, harga, stok, batas);
+            boolean sukses = semenDAO.insert(s);
 
-        try (Connection conn = Koneksi.getKoneksi()) {
-            try (Statement st = conn.createStatement();
-                 ResultSet rs = st.executeQuery(sqlMax)) {
-                if (rs.next()) {
-                    newId = rs.getInt("next_id");
-                }
+            if (sukses) {
+                JOptionPane.showMessageDialog(this,
+                        "Varian semen baru ID #" + id + " ('" + nama + "') berhasil didaftarkan!",
+                        "Penambahan Berhasil",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                bersihkanFormTambah();
+                loadTabelKatalogMaster();
             }
-
-            try (PreparedStatement ps = conn.prepareStatement(sqlInsert)) {
-                ps.setInt(1, newId);
-                ps.setString(2, nama);
-                ps.setString(3, satuan);
-                ps.setDouble(4, harga);
-                ps.setInt(5, stok);
-                ps.setInt(6, batas);
-                ps.executeUpdate();
-            }
-
-            JOptionPane.showMessageDialog(this,
-                    "Varian semen baru [ID: " + newId + "] " + nama + " berhasil didaftarkan!",
-                    "Penambahan Berhasil",
-                    JOptionPane.INFORMATION_MESSAGE);
-
-            bersihkanFormTambah();
-            loadTabelKatalogMaster();
-
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Gagal menambahkan varian semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
+            if (ex.getErrorCode() == 1062) {
+                JOptionPane.showMessageDialog(this, "ID Semen #" + id + " sudah terdaftar di database! Gunakan nomor ID yang lain.", "ID Duplikat", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menambahkan varian semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }//GEN-LAST:event_btnSimpanTambahActionPerformed
 
     private void btnHapusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHapusActionPerformed
-        String idStr = txtIdHapus.getText().trim();
-        if (idStr.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Masukkan ID Semen yang ingin dihapus!", "Peringatan", JOptionPane.WARNING_MESSAGE);
+        int row = tblKatalogMaster.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih baris semen dari tabel katalog yang ingin dihapus!", "Peringatan", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int id;
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "ID Semen harus berupa angka!", "Format Salah", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+        int id = Integer.parseInt(tblKatalogMaster.getValueAt(row, 0).toString());
 
-        // Konfirmasi Validasi (y/n)
         int confirm = JOptionPane.showConfirmDialog(
                 this,
                 "Apakah Anda yakin ingin menghapus data semen ID #" + id + "?\nPerhatian: Data yang terhapus tidak dapat dipulihkan.",
-                "Konfirmasi Hapus Data (y/n)",
+                "Konfirmasi Hapus Data",
                 JOptionPane.YES_NO_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
@@ -806,22 +708,15 @@ public class FormKelolaSemen extends javax.swing.JFrame {
             return;
         }
 
-        String sqlDelete = "DELETE FROM semen WHERE id_semen = ?";
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sqlDelete)) {
-            ps.setInt(1, id);
-            int affected = ps.executeUpdate();
-
-            if (affected > 0) {
+        try {
+            boolean sukses = semenDAO.delete(id);
+            if (sukses) {
                 JOptionPane.showMessageDialog(this, "Data semen ID #" + id + " berhasil dihapus dari database!", "Berhasil", JOptionPane.INFORMATION_MESSAGE);
-                txtIdHapus.setText("");
                 loadTabelKatalogMaster();
             } else {
                 JOptionPane.showMessageDialog(this, "ID Semen #" + id + " tidak ditemukan di katalog!", "Gagal Hapus", JOptionPane.WARNING_MESSAGE);
             }
-
         } catch (SQLException ex) {
-            // Tangani proteksi foreign key jika semen sudah memiliki relasi pesanan/stok masuk
             if (ex.getMessage().toLowerCase().contains("foreign key") || ex.getErrorCode() == 1451) {
                 JOptionPane.showMessageDialog(this,
                         "Semen ini tidak dapat dihapus karena sudah memiliki riwayat transaksi/pesanan sebelumnya!\n" +
@@ -834,17 +729,17 @@ public class FormKelolaSemen extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_btnHapusActionPerformed
 
-    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
+    private void btnKeluarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnKeluarActionPerformed
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Apakah Anda yakin ingin keluar?",
-                "Konfirmasi Logout",
+                "Konfirmasi Keluar",
                 JOptionPane.YES_NO_OPTION);
         if (confirm == JOptionPane.YES_OPTION) {
             SesiPengguna.setPengguna(null);
             new FormLogin().setVisible(true);
             this.dispose();
         }
-    }//GEN-LAST:event_btnLogoutActionPerformed
+    }//GEN-LAST:event_btnKeluarActionPerformed
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
@@ -854,20 +749,18 @@ public class FormKelolaSemen extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnHapus;
-    private javax.swing.JButton btnLogout;
+    private javax.swing.JButton btnKeluar;
     private javax.swing.JButton btnNavKelolaSemen;
     private javax.swing.JButton btnNavMenu;
     private javax.swing.JButton btnNavTambahStok;
     private javax.swing.JButton btnNavUbahData;
     private javax.swing.JButton btnSimpanTambah;
-    private javax.swing.JButton btnTabHapus;
-    private javax.swing.JButton btnTabTambah;
     private javax.swing.JScrollPane jScrollPaneTabel;
     private javax.swing.JLabel lblBatasAman;
     private javax.swing.JLabel lblDotStatus;
-    private javax.swing.JLabel lblHapusHeader;
     private javax.swing.JLabel lblHargaJual;
     private javax.swing.JLabel lblHeaderTitle;
+    private javax.swing.JLabel lblIdSemen;
     private javax.swing.JLabel lblLogoSidebar;
     private javax.swing.JLabel lblNamaSemen;
     private javax.swing.JLabel lblRoleText;
@@ -876,7 +769,6 @@ public class FormKelolaSemen extends javax.swing.JFrame {
     private javax.swing.JLabel lblStokAwal;
     private javax.swing.JLabel lblTabelTitle;
     private javax.swing.JPanel panelBadgeUser;
-    private javax.swing.JPanel panelBoxHapus;
     private javax.swing.JPanel panelCardForm;
     private javax.swing.JPanel panelCardTabel;
     private javax.swing.JPanel panelKonten;
@@ -884,7 +776,7 @@ public class FormKelolaSemen extends javax.swing.JFrame {
     private javax.swing.JTable tblKatalogMaster;
     private javax.swing.JTextField txtBatasAman;
     private javax.swing.JTextField txtHargaJual;
-    private javax.swing.JTextField txtIdHapus;
+    private javax.swing.JTextField txtIdSemen;
     private javax.swing.JTextField txtNamaSemen;
     private javax.swing.JTextField txtSatuan;
     private javax.swing.JTextField txtStokAwal;

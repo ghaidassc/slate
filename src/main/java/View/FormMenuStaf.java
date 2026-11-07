@@ -37,10 +37,10 @@ public class FormMenuStaf extends javax.swing.JFrame {
 
     public FormMenuStaf() {
         initComponents();
-        // Berikan lebar yang lega agar border jendela Windows tidak memotong kartu kanan
-        this.setPreferredSize(new Dimension(1140, 700));
-        this.setSize(1140, 700);
-        this.pack();
+        panelSidebar.setPreferredSize(new Dimension(240, 680));
+        panelSidebar.setMinimumSize(new Dimension(240, 680));
+        this.setPreferredSize(new Dimension(1120, 700));
+        this.setSize(1120, 700);
         this.setLocationRelativeTo(null);
         
         rapikanGayaKomponen();
@@ -70,7 +70,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
     }
 
     private void rapikanGayaKomponen() {
-        // Border card dengan aksen warna atas
         cardPendapatan.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createMatteBorder(3, 1, 1, 1, new Color(234, 88, 12)),
                 BorderFactory.createEmptyBorder(4, 4, 4, 4)
@@ -137,8 +136,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
         header.setBackground(new Color(241, 245, 249));
         header.setForeground(new Color(71, 85, 105));
         header.setPreferredSize(new Dimension(header.getWidth(), 38));
-        
-        // Memenuhi Catatan Aslab Poin 19: Kunci kolom agar tidak bisa digeser urutannya
         header.setReorderingAllowed(false);
 
         tblRiwayat.getColumnModel().getColumn(0).setPreferredWidth(45);
@@ -147,7 +144,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
         tblRiwayat.getColumnModel().getColumn(3).setPreferredWidth(90);
         tblRiwayat.getColumnModel().getColumn(4).setPreferredWidth(90);
 
-        // Center ID
         tblRiwayat.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -158,7 +154,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
             }
         });
 
-        // Bold Total Tagihan
         tblRiwayat.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -169,7 +164,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
             }
         });
 
-        // Badge Status Bayar & Status Kirim
         tblRiwayat.getColumnModel().getColumn(3).setCellRenderer(new StatusBadgeBayarRenderer());
         tblRiwayat.getColumnModel().getColumn(4).setCellRenderer(new StatusBadgeKirimRenderer());
     }
@@ -308,9 +302,9 @@ public class FormMenuStaf extends javax.swing.JFrame {
             }
 
             if (imgAsli != null) {
-                int rgbPojok = imgAsli.getRGB(0, 0);
-                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                panelSidebar.setBackground(warnaAsliLogo);
+                int sampleRgb = imgAsli.getRGB(0, 0);
+                Color warnaBgLogo = new Color((sampleRgb >> 16) & 0xFF, (sampleRgb >> 8) & 0xFF, sampleRgb & 0xFF);
+                panelSidebar.setBackground(warnaBgLogo);
 
                 Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
                 lblLogoSidebar.setIcon(new ImageIcon(imgResized));
@@ -327,11 +321,11 @@ public class FormMenuStaf extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        lblRoleText = new javax.swing.JLabel();
         panelSidebar = new javax.swing.JPanel();
         lblLogoSidebar = new javax.swing.JLabel();
         panelBadgeUser = new javax.swing.JPanel();
         lblDotStatus = new javax.swing.JLabel();
-        lblRoleText = new javax.swing.JLabel();
         lblWilayahText = new javax.swing.JLabel();
         btnNavMenu = new javax.swing.JButton();
         btnNavPelanggan = new javax.swing.JButton();
@@ -357,6 +351,10 @@ public class FormMenuStaf extends javax.swing.JFrame {
         jScrollPaneTabel = new javax.swing.JScrollPane();
         tblRiwayat = new javax.swing.JTable();
 
+        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
+        lblRoleText.setText("Staf Penjualan");
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Menu Staf Penjualan");
         setResizable(false);
@@ -372,10 +370,6 @@ public class FormMenuStaf extends javax.swing.JFrame {
         lblDotStatus.setForeground(new java.awt.Color(34, 196, 95));
         lblDotStatus.setText("●");
 
-        lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
-        lblRoleText.setText("Staf Penjualan");
-
         lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
         lblWilayahText.setForeground(new java.awt.Color(134, 148, 160));
         lblWilayahText.setText("Samarinda");
@@ -388,18 +382,14 @@ public class FormMenuStaf extends javax.swing.JFrame {
                 .addGap(12, 12, 12)
                 .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
-                .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblRoleText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblWilayahText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(lblWilayahText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(16, Short.MAX_VALUE))
         );
         panelBadgeUserLayout.setVerticalGroup(
             panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBadgeUserLayout.createSequentialGroup()
                 .addGap(8, 8, 8)
-                .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(lblDotStatus)
-                    .addComponent(lblRoleText))
+                .addComponent(lblDotStatus)
                 .addGap(2, 2, 2)
                 .addComponent(lblWilayahText)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -445,7 +435,7 @@ public class FormMenuStaf extends javax.swing.JFrame {
 
         btnNavStatus.setBackground(new java.awt.Color(22, 27, 34));
         btnNavStatus.setForeground(new java.awt.Color(134, 148, 160));
-        btnNavStatus.setText("Pembaruan Status");
+        btnNavStatus.setText("PSPP");
         btnNavStatus.setBorderPainted(false);
         btnNavStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavStatus.setFocusPainted(false);
@@ -581,13 +571,13 @@ public class FormMenuStaf extends javax.swing.JFrame {
         cardLakuLayout.setVerticalGroup(
             cardLakuLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(cardLakuLayout.createSequentialGroup()
-                .addGap(14, 14, 14)
+                .addGap(16, 16, 16)
                 .addComponent(lblTitleLaku)
-                .addGap(8, 8, 8)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(lblValLaku)
                 .addGap(8, 8, 8)
                 .addComponent(lblSubLaku)
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(27, Short.MAX_VALUE))
         );
 
         cardAktif.setBackground(new java.awt.Color(255, 255, 255));

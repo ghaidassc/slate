@@ -1,13 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
 import Config.Koneksi;
 import Model.DetailNota;
 import Model.Pesanan;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,113 +17,258 @@ import java.util.List;
  *
  * @author LOQ
  */
-public class PesananDAO {
+public class PesananDAO implements PesananDAOInterface {
 
+    @Override
     public List<Pesanan> getAllRekap() throws SQLException {
         List<Pesanan> list = new ArrayList<>();
-        Connection conn = Koneksi.getKoneksi();
         String sql = "SELECT p.id_pesanan, p.tgl_pesanan, pl.nama_usaha, p.total_tagihan_rp, "
                    + "p.status AS status_kirim, pb.status AS status_bayar "
                    + "FROM pesanan p "
                    + "JOIN pelanggan pl ON p.pelanggan_id_pelanggan = pl.id_pelanggan "
                    + "JOIN pembayaran pb ON pb.id_pembayaran = p.pembayaran_id_pembayaran "
                    + "ORDER BY p.id_pesanan ASC";
-        Statement st = conn.createStatement();
-        ResultSet rs = st.executeQuery(sql);
-        while (rs.next()) {
-            Pesanan p = new Pesanan(
-                rs.getInt("id_pesanan"),
-                rs.getString("tgl_pesanan"),
-                rs.getDouble("total_tagihan_rp"),
-                rs.getString("status_kirim"),
-                0, 0, 0
-            );
-            p.setNamaPelanggan(rs.getString("nama_usaha"));
-            p.setStatusBayar(rs.getString("status_bayar"));
-            list.add(p);
+
+        try (Connection conn = Koneksi.getKoneksi();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                Pesanan p = new Pesanan(
+                    rs.getInt("id_pesanan"),
+                    rs.getString("tgl_pesanan"),
+                    rs.getDouble("total_tagihan_rp"),
+                    rs.getString("status_kirim"),
+                    0, 0, 0
+                );
+                p.setNamaPelanggan(rs.getString("nama_usaha"));
+                p.setStatusBayar(rs.getString("status_bayar"));
+                list.add(p);
+            }
         }
         return list;
     }
 
+    @Override
     public boolean buatPesanan(int idPelanggan, int idSemen, int qty, double totalTagihan, boolean isLunas, int idStaf) throws SQLException {
-        Connection conn = Koneksi.getKoneksi();
+        Connection conn = null;
         try {
+            conn = Koneksi.getKoneksi();
             conn.setAutoCommit(false);
 
-            // 1. Potong Stok Semen
-            PreparedStatement psStok = conn.prepareStatement("UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ?");
-            psStok.setInt(1, qty);
-            psStok.setInt(2, idSemen);
-            psStok.executeUpdate();
+            try (PreparedStatement psStok = conn.prepareStatement("UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ?")) {
+                psStok.setInt(1, qty);
+                psStok.setInt(2, idSemen);
+                psStok.executeUpdate();
+            }
 
-            // 2. Tambah Pembayaran
-            int idPembayaran = getNextId("pembayaran", "id_pembayaran");
-            PreparedStatement psBayar = conn.prepareStatement("INSERT INTO pembayaran (id_pembayaran, tgl_bayar, metode_bayar, jumlah_bayar_rp, status, pesanan_id_pesanan) VALUES (?, ?, ?, ?, ?, ?)");
-            psBayar.setInt(1, idPembayaran);
-            psBayar.setDate(2, Date.valueOf(LocalDate.now()));
-            psBayar.setString(3, "Tunai");
-            psBayar.setDouble(4, totalTagihan);
-            psBayar.setString(5, isLunas ? "Lunas" : "Belum Lunas");
-            psBayar.setInt(6, 0);
-            psBayar.executeUpdate();
+            int idPembayaran = getNextId(conn, "pembayaran", "id_pembayaran");
+            String sqlBayar = "INSERT INTO pembayaran (id_pembayaran, tgl_bayar, metode_bayar, jumlah_bayar_rp, status, pesanan_id_pesanan) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement psBayar = conn.prepareStatement(sqlBayar)) {
+                psBayar.setInt(1, idPembayaran);
+                psBayar.setDate(2, Date.valueOf(LocalDate.now()));
+                psBayar.setString(3, "Tunai");
+                psBayar.setDouble(4, totalTagihan);
+                psBayar.setString(5, isLunas ? "Lunas" : "Belum Lunas");
+                psBayar.setInt(6, 0);
+                psBayar.executeUpdate();
+            }
 
-            // 3. Tambah Pesanan
-            int idPesanan = getNextId("pesanan", "id_pesanan");
-            PreparedStatement psPesanan = conn.prepareStatement("INSERT INTO pesanan (id_pesanan, tgl_pesanan, total_tagihan_rp, status, staf_penjualan_id_pengguna, pembayaran_id_pembayaran, pelanggan_id_pelanggan) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            psPesanan.setInt(1, idPesanan);
-            psPesanan.setDate(2, Date.valueOf(LocalDate.now()));
-            psPesanan.setDouble(3, totalTagihan);
-            psPesanan.setString(4, "Diproses");
-            psPesanan.setInt(5, idStaf);
-            psPesanan.setInt(6, idPembayaran);
-            psPesanan.setInt(7, idPelanggan);
-            psPesanan.executeUpdate();
+            int idPesanan = getNextId(conn, "pesanan", "id_pesanan");
+            String sqlPesanan = "INSERT INTO pesanan (id_pesanan, tgl_pesanan, total_tagihan_rp, status, staf_penjualan_id_pengguna, pembayaran_id_pembayaran, pelanggan_id_pelanggan) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement psPesanan = conn.prepareStatement(sqlPesanan)) {
+                psPesanan.setInt(1, idPesanan);
+                psPesanan.setDate(2, Date.valueOf(LocalDate.now()));
+                psPesanan.setDouble(3, totalTagihan);
+                psPesanan.setString(4, "Diproses");
+                psPesanan.setInt(5, idStaf);
+                psPesanan.setInt(6, idPembayaran);
+                psPesanan.setInt(7, idPelanggan);
+                psPesanan.executeUpdate();
+            }
 
-            // Update FK Pembayaran
-            PreparedStatement psUpBayar = conn.prepareStatement("UPDATE pembayaran SET pesanan_id_pesanan = ? WHERE id_pembayaran = ?");
-            psUpBayar.setInt(1, idPesanan);
-            psUpBayar.setInt(2, idPembayaran);
-            psUpBayar.executeUpdate();
+            try (PreparedStatement psUpBayar = conn.prepareStatement("UPDATE pembayaran SET pesanan_id_pesanan = ? WHERE id_pembayaran = ?")) {
+                psUpBayar.setInt(1, idPesanan);
+                psUpBayar.setInt(2, idPembayaran);
+                psUpBayar.executeUpdate();
+            }
 
-            // 4. Tambah Detail Pesanan
-            int idDetail = getNextId("detail_pesanan", "id_detail");
-            PreparedStatement psDetail = conn.prepareStatement("INSERT INTO detail_pesanan (id_detail, jumlah_qty, harga_satuan_rp, subtotal_rp, pesanan_id_pesanan, semen_id_semen) VALUES (?, ?, ?, ?, ?, ?)");
-            psDetail.setInt(1, idDetail);
-            psDetail.setInt(2, qty);
-            psDetail.setDouble(3, totalTagihan / qty);
-            psDetail.setDouble(4, totalTagihan);
-            psDetail.setInt(5, idPesanan);
-            psDetail.setInt(6, idSemen);
-            psDetail.executeUpdate();
+            int idDetail = getNextId(conn, "detail_pesanan", "id_detail");
+            String sqlDetail = "INSERT INTO detail_pesanan (id_detail, jumlah_qty, harga_satuan_rp, subtotal_rp, pesanan_id_pesanan, semen_id_semen) VALUES (?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail)) {
+                psDetail.setInt(1, idDetail);
+                psDetail.setInt(2, qty);
+                psDetail.setDouble(3, totalTagihan / qty);
+                psDetail.setDouble(4, totalTagihan);
+                psDetail.setInt(5, idPesanan);
+                psDetail.setInt(6, idSemen);
+                psDetail.executeUpdate();
+            }
 
             conn.commit();
-            conn.setAutoCommit(true);
             return true;
         } catch (SQLException e) {
-            conn.rollback();
-            conn.setAutoCommit(true);
+            if (conn != null) conn.rollback();
             throw e;
+        } finally {
+            if (conn != null) conn.setAutoCommit(true);
         }
     }
 
+    @Override
+    public int simpanPesananLengkap(int idPelanggan, int idStaf, String metodeBayar, String statusBayar, 
+                                     double totalTagihan, double nominalBayar, List<Object[]> itemKeranjang) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = Koneksi.getKoneksi();
+            conn.setAutoCommit(false);
+
+            try (Statement st = conn.createStatement()) {
+                st.execute("SET FOREIGN_KEY_CHECKS = 0");
+            }
+
+            int nextIdPesanan = getNextId(conn, "pesanan", "id_pesanan");
+            int nextIdBayar = getNextId(conn, "pembayaran", "id_pembayaran");
+
+            String sqlBayar = "INSERT INTO pembayaran (id_pembayaran, tgl_bayar, metode_bayar, jumlah_bayar_rp, status, pesanan_id_pesanan) VALUES (?, CURDATE(), ?, ?, ?, ?)";
+            try (PreparedStatement psBayar = conn.prepareStatement(sqlBayar)) {
+                psBayar.setInt(1, nextIdBayar);
+                psBayar.setString(2, metodeBayar);
+                psBayar.setDouble(3, nominalBayar);
+                psBayar.setString(4, statusBayar);
+                psBayar.setInt(5, nextIdPesanan);
+                psBayar.executeUpdate();
+            }
+
+            String sqlPesanan = "INSERT INTO pesanan (id_pesanan, tgl_pesanan, total_tagihan_rp, status, staf_penjualan_id_pengguna, pembayaran_id_pembayaran, pelanggan_id_pelanggan) VALUES (?, CURDATE(), ?, 'Diproses', ?, ?, ?)";
+            try (PreparedStatement psPesanan = conn.prepareStatement(sqlPesanan)) {
+                psPesanan.setInt(1, nextIdPesanan);
+                psPesanan.setDouble(2, totalTagihan);
+                psPesanan.setInt(3, idStaf);
+                psPesanan.setInt(4, nextIdBayar);
+                psPesanan.setInt(5, idPelanggan);
+                psPesanan.executeUpdate();
+            }
+
+            String sqlDetail = "INSERT INTO detail_pesanan (id_detail, jumlah_qty, harga_satuan_rp, subtotal_rp, pesanan_id_pesanan, semen_id_semen) VALUES (?, ?, ?, ?, ?, ?)";
+            String sqlKurangStok = "UPDATE semen SET stok_qty = stok_qty - ? WHERE id_semen = ?";
+
+            int nextIdDetail = getNextId(conn, "detail_pesanan", "id_detail");
+
+            try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail);
+                 PreparedStatement psStok = conn.prepareStatement(sqlKurangStok)) {
+
+                for (Object[] item : itemKeranjang) {
+                    int idSemen = (int) item[0];
+                    int qty = (int) item[1];
+                    double harga = (double) item[2];
+                    double subtotal = (double) item[3];
+
+                    psDetail.setInt(1, nextIdDetail++);
+                    psDetail.setInt(2, qty);
+                    psDetail.setDouble(3, harga);
+                    psDetail.setDouble(4, subtotal);
+                    psDetail.setInt(5, nextIdPesanan);
+                    psDetail.setInt(6, idSemen);
+                    psDetail.executeUpdate();
+
+                    psStok.setInt(1, qty);
+                    psStok.setInt(2, idSemen);
+                    psStok.executeUpdate();
+                }
+            }
+
+            try (Statement st = conn.createStatement()) {
+                st.execute("SET FOREIGN_KEY_CHECKS = 1");
+            }
+
+            conn.commit();
+            return nextIdPesanan;
+        } catch (SQLException ex) {
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    try (Statement st = conn.createStatement()) {
+                        st.execute("SET FOREIGN_KEY_CHECKS = 1");
+                    }
+                } catch (SQLException ignored) {}
+            }
+            throw ex;
+        } finally {
+            if (conn != null) conn.setAutoCommit(true);
+        }
+    }
+
+    @Override
+    public boolean refundPesanan(int idPesanan) throws SQLException {
+        Connection conn = null;
+        try {
+            conn = Koneksi.getKoneksi();
+            conn.setAutoCommit(false);
+
+            String sqlCariDetail = "SELECT semen_id_semen, jumlah_qty FROM detail_pesanan WHERE pesanan_id_pesanan = ?";
+            try (PreparedStatement psDetail = conn.prepareStatement(sqlCariDetail)) {
+                psDetail.setInt(1, idPesanan);
+                try (ResultSet rs = psDetail.executeQuery()) {
+                    String sqlRestok = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
+                    try (PreparedStatement psRestok = conn.prepareStatement(sqlRestok)) {
+                        while (rs.next()) {
+                            int idSemen = rs.getInt("semen_id_semen");
+                            int qty = rs.getInt("jumlah_qty");
+
+                            psRestok.setInt(1, qty);
+                            psRestok.setInt(2, idSemen);
+                            psRestok.executeUpdate();
+                        }
+                    }
+                }
+            }
+
+            String sqlPesanan = "UPDATE pesanan SET status = 'Dibatalkan' WHERE id_pesanan = ?";
+            try (PreparedStatement psP = conn.prepareStatement(sqlPesanan)) {
+                psP.setInt(1, idPesanan);
+                psP.executeUpdate();
+            }
+
+            String sqlBayar = "UPDATE pembayaran p JOIN pesanan ps ON p.pesanan_id_pesanan = ps.id_pesanan " +
+                             "SET p.status = 'Dibatalkan' WHERE ps.id_pesanan = ?";
+            try (PreparedStatement psB = conn.prepareStatement(sqlBayar)) {
+                psB.setInt(1, idPesanan);
+                psB.executeUpdate();
+            }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e) {
+            if (conn != null) conn.rollback();
+            throw e;
+        } finally {
+            if (conn != null) conn.setAutoCommit(true);
+        }
+    }
+
+    @Override
     public boolean updateStatusPembayaran(int idPesanan, String statusBayarBaru) throws SQLException {
-        Connection conn = Koneksi.getKoneksi();
         String sql = "UPDATE pembayaran SET status = ? WHERE pesanan_id_pesanan = ?";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, statusBayarBaru);
-        ps.setInt(2, idPesanan);
-        return ps.executeUpdate() > 0;
+        try (Connection conn = Koneksi.getKoneksi();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, statusBayarBaru);
+            ps.setInt(2, idPesanan);
+            return ps.executeUpdate() > 0;
+        }
     }
 
+    @Override
     public boolean updateStatusPengiriman(int idPesanan, String statusKirimBaru) throws SQLException {
-        Connection conn = Koneksi.getKoneksi();
         String sql = "UPDATE pesanan SET status = ? WHERE id_pesanan = ?";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, statusKirimBaru);
-        ps.setInt(2, idPesanan);
-        return ps.executeUpdate() > 0;
+        try (Connection conn = Koneksi.getKoneksi();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, statusKirimBaru);
+            ps.setInt(2, idPesanan);
+            return ps.executeUpdate() > 0;
+        }
     }
 
+    @Override
     public List<Object[]> getAntreanPengiriman() throws SQLException {
         List<Object[]> list = new ArrayList<>();
         String sql = "SELECT p.id_pesanan, pl.nama_usaha, pb.status AS status_bayar, p.status AS status_kirim " +
@@ -146,6 +292,7 @@ public class PesananDAO {
         return list;
     }
 
+    @Override
     public DetailNota getDetailNota(int idPesanan) throws SQLException {
         String sql = "SELECT p.id_pesanan, p.tgl_pesanan, p.total_tagihan_rp, p.status AS status_kirim, " +
                      "pl.nama_usaha, pl.alamat_kirim, " +
@@ -200,9 +347,11 @@ public class PesananDAO {
         }
     }
 
+    @Override
     public boolean perbaruiStatusPesananDanBayar(int idPesanan, String statusKirimBaru, String statusBayarBaru) throws SQLException {
-        Connection conn = Koneksi.getKoneksi();
+        Connection conn = null;
         try {
+            conn = Koneksi.getKoneksi();
             conn.setAutoCommit(false);
 
             String statusKirimLama = "";
@@ -220,38 +369,37 @@ public class PesananDAO {
                         totalTagihan = rs.getDouble("total_tagihan_rp");
                     } else {
                         conn.rollback();
-                        conn.setAutoCommit(true);
                         return false;
                     }
                 }
             }
 
-            // Jika diubah menjadi Refund -> Kembalikan stok semen ke gudang & tandai pembayaran refund
-            if ("Refund".equalsIgnoreCase(statusKirimBaru) && !"Refund".equalsIgnoreCase(statusKirimLama)) {
-                String sqlAmbilItem = "SELECT semen_id_semen, jumlah_qty FROM detail_pesanan WHERE pesanan_id_pesanan = ?";
-                String sqlRestock = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
+            if ("Refund".equalsIgnoreCase(statusKirimBaru) || "Dibatalkan".equalsIgnoreCase(statusKirimBaru)) {
+                if (!"Refund".equalsIgnoreCase(statusKirimLama) && !"Dibatalkan".equalsIgnoreCase(statusKirimLama)) {
+                    String sqlAmbilItem = "SELECT semen_id_semen, jumlah_qty FROM detail_pesanan WHERE pesanan_id_pesanan = ?";
+                    String sqlRestock = "UPDATE semen SET stok_qty = stok_qty + ? WHERE id_semen = ?";
 
-                try (PreparedStatement psItem = conn.prepareStatement(sqlAmbilItem);
-                     PreparedStatement psRestock = conn.prepareStatement(sqlRestock)) {
-                    psItem.setInt(1, idPesanan);
-                    try (ResultSet rsItem = psItem.executeQuery()) {
-                        while (rsItem.next()) {
-                            int idSemen = rsItem.getInt("semen_id_semen");
-                            int qty = rsItem.getInt("jumlah_qty");
-                            psRestock.setInt(1, qty);
-                            psRestock.setInt(2, idSemen);
-                            psRestock.executeUpdate();
+                    try (PreparedStatement psItem = conn.prepareStatement(sqlAmbilItem);
+                         PreparedStatement psRestock = conn.prepareStatement(sqlRestock)) {
+                        psItem.setInt(1, idPesanan);
+                        try (ResultSet rsItem = psItem.executeQuery()) {
+                            while (rsItem.next()) {
+                                int idSemen = rsItem.getInt("semen_id_semen");
+                                int qty = rsItem.getInt("jumlah_qty");
+                                psRestock.setInt(1, qty);
+                                psRestock.setInt(2, idSemen);
+                                psRestock.executeUpdate();
+                            }
                         }
                     }
-                }
 
-                String sqlUpdateBayar = "UPDATE pembayaran SET status = 'Refund', tgl_refund = CURDATE() WHERE pesanan_id_pesanan = ?";
-                try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
-                    psBayar.setInt(1, idPesanan);
-                    psBayar.executeUpdate();
+                    String sqlUpdateBayar = "UPDATE pembayaran SET status = 'Dibatalkan', tgl_bayar = CURDATE() WHERE pesanan_id_pesanan = ?";
+                    try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
+                        psBayar.setInt(1, idPesanan);
+                        psBayar.executeUpdate();
+                    }
                 }
             } else {
-                // Update status pembayaran (Belum Lunas / Lunas)
                 String sqlUpdateBayar = "UPDATE pembayaran SET status = ?, jumlah_bayar_rp = ?, tgl_bayar = CURDATE() WHERE pesanan_id_pesanan = ?";
                 try (PreparedStatement psBayar = conn.prepareStatement(sqlUpdateBayar)) {
                     psBayar.setString(1, statusBayarBaru);
@@ -261,7 +409,6 @@ public class PesananDAO {
                 }
             }
 
-            // Update status pesanan di tabel pesanan
             String sqlUpdatePesanan = "UPDATE pesanan SET status = ? WHERE id_pesanan = ?";
             try (PreparedStatement psUpdate = conn.prepareStatement(sqlUpdatePesanan)) {
                 psUpdate.setString(1, statusKirimBaru);
@@ -270,24 +417,23 @@ public class PesananDAO {
             }
 
             conn.commit();
-            conn.setAutoCommit(true);
             return true;
         } catch (SQLException e) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ignored) {}
-                try { conn.setAutoCommit(true); } catch (SQLException ignored) {}
-            }
+            if (conn != null) conn.rollback();
             throw e;
+        } finally {
+            if (conn != null) conn.setAutoCommit(true);
         }
     }
 
-    private int getNextId(String table, String col) throws SQLException {
-        Connection conn = Koneksi.getKoneksi();
-        Statement st = conn.createStatement();
-        ResultSet rs = st.executeQuery("SELECT MAX(" + col + ") FROM " + table);
-        return (rs.next()) ? rs.getInt(1) + 1 : 1;
+    private int getNextId(Connection conn, String table, String col) throws SQLException {
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery("SELECT COALESCE(MAX(" + col + "), 0) + 1 FROM " + table)) {
+            return rs.next() ? rs.getInt(1) : 1;
+        }
     }
-    
+
+    @Override
     public Object[] getStatistikDashboardStaf() throws SQLException {
         double totalPendapatan = 0;
         int jumlahTransaksiSelesai = 0;
@@ -297,7 +443,6 @@ public class PesananDAO {
         int prosesKirim = 0;
         int menunggu = 0;
 
-        // 1. Total Pendapatan & Transaksi Selesai (Bulan Berjalan)
         String sqlPendapatan = "SELECT COALESCE(SUM(total_tagihan_rp), 0) AS total_rp, COUNT(id_pesanan) AS total_selesai " +
                                "FROM pesanan " +
                                "WHERE status = 'Diterima' AND MONTH(tgl_pesanan) = MONTH(CURDATE()) AND YEAR(tgl_pesanan) = YEAR(CURDATE())";
@@ -310,12 +455,11 @@ public class PesananDAO {
             }
         }
 
-        // 2. Semen Paling Laku
         String sqlLaku = "SELECT s.nama_semen, COALESCE(SUM(dp.jumlah_qty), 0) AS total_sak " +
                          "FROM detail_pesanan dp " +
                          "JOIN semen s ON dp.semen_id_semen = s.id_semen " +
                          "JOIN pesanan p ON dp.pesanan_id_pesanan = p.id_pesanan " +
-                         "WHERE p.status != 'Refund' " +
+                         "WHERE p.status NOT IN ('Refund', 'Dibatalkan') " +
                          "GROUP BY s.id_semen, s.nama_semen " +
                          "ORDER BY total_sak DESC LIMIT 1";
         try (Connection conn = Koneksi.getKoneksi();
@@ -327,11 +471,10 @@ public class PesananDAO {
             }
         }
 
-        // 3. Pesanan Aktif Berjalan (Diproses & Dikirim)
         String sqlAktif = "SELECT " +
-                          "SUM(CASE WHEN status IN ('Diproses', 'Dikirim', 'Sedang Dikirim') THEN 1 ELSE 0 END) AS total_aktif, " +
-                          "SUM(CASE WHEN status IN ('Dikirim', 'Sedang Dikirim') THEN 1 ELSE 0 END) AS jml_kirim, " +
-                          "SUM(CASE WHEN status = 'Diproses' THEN 1 ELSE 0 END) AS jml_menunggu " +
+                          "COALESCE(SUM(CASE WHEN status IN ('Diproses', 'Dikirim', 'Sedang Dikirim') THEN 1 ELSE 0 END), 0) AS total_aktif, " +
+                          "COALESCE(SUM(CASE WHEN status IN ('Dikirim', 'Sedang Dikirim') THEN 1 ELSE 0 END), 0) AS jml_kirim, " +
+                          "COALESCE(SUM(CASE WHEN status = 'Diproses' THEN 1 ELSE 0 END), 0) AS jml_menunggu " +
                           "FROM pesanan";
         try (Connection conn = Koneksi.getKoneksi();
              Statement st = conn.createStatement();

@@ -236,7 +236,7 @@
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="a0" green="94" red="86" type="rgb"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Pembaruan Status"/>
+            <Property name="text" type="java.lang.String" value="PSPP"/>
             <Property name="borderPainted" type="boolean" value="false"/>
             <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
               <Color id="Hand Cursor"/>
@@ -363,7 +363,7 @@
                           </Group>
                           <Component id="btnTambahItem" pref="335" max="32767" attributes="0"/>
                           <Component id="lblHeaderDaftarItem" min="-2" max="-2" attributes="0"/>
-                          <Component id="panelDaftarItem" pref="335" max="32767" attributes="0"/>
+                          <Component id="panelDaftarItem" max="32767" attributes="0"/>
                       </Group>
                       <EmptySpace pref="18" max="32767" attributes="0"/>
                   </Group>
@@ -399,7 +399,7 @@
                       <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                       <Component id="lblHeaderDaftarItem" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
-                      <Component id="panelDaftarItem" pref="145" max="32767" attributes="0"/>
+                      <Component id="panelDaftarItem" max="32767" attributes="0"/>
                       <EmptySpace min="-2" pref="16" max="-2" attributes="0"/>
                   </Group>
               </Group>
@@ -430,9 +430,6 @@
             </Component>
             <Component class="javax.swing.JComboBox" name="cmbPelanggan">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Segoe UI" size="12" style="0"/>
-                </Property>
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                   <StringArray count="3">
                     <StringItem index="0" value="[ID: 11] Toko Bangunan Berkah Mandiri"/>
@@ -461,9 +458,6 @@
             </Component>
             <Component class="javax.swing.JComboBox" name="cmbProduk">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Segoe UI" size="12" style="0"/>
-                </Property>
                 <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
                   <StringArray count="3">
                     <StringItem index="0" value="Semen Sak 50kg (Rp 68.000 / Sak)"/>
@@ -619,7 +613,7 @@
                               <Component id="lblTextTotalTagihan" alignment="3" min="-2" max="-2" attributes="0"/>
                               <Component id="lblTotalTagihanBawah" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="40" max="32767" attributes="0"/>
+                          <EmptySpace pref="62" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -846,9 +840,6 @@
             </Component>
             <Component class="javax.swing.JButton" name="btnMetodeTransfer">
               <Properties>
-                <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                  <Font name="Segoe UI" size="12" style="0"/>
-                </Property>
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="69" green="55" red="47" type="rgb"/>
                 </Property>

@@ -245,7 +245,7 @@
             <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="a0" green="94" red="86" type="rgb"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Status Pengiriman"/>
+            <Property name="text" type="java.lang.String" value="PSPP"/>
             <Property name="borderPainted" type="boolean" value="false"/>
             <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
               <Color id="Hand Cursor"/>
@@ -402,7 +402,7 @@
                       <Component id="lblAlamat" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                       <Component id="jScrollPaneAlamat" min="-2" pref="80" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="18" max="-2" attributes="0"/>
+                      <EmptySpace type="18" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="btnSimpan" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>
                           <Component id="btnUbah" alignment="3" min="-2" pref="36" max="-2" attributes="0"/>

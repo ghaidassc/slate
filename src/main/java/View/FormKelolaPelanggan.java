@@ -73,14 +73,14 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
     private void pasangPlaceholderCari() {
         txtCari.setText(PLACEHOLDER_CARI);
-        txtCari.setForeground(new Color(148, 163, 184)); // Warna abu-abu placeholder
+        txtCari.setForeground(new Color(148, 163, 184));
 
         txtCari.addFocusListener(new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
                 if (txtCari.getText().equals(PLACEHOLDER_CARI)) {
                     txtCari.setText("");
-                    txtCari.setForeground(new Color(15, 23, 42)); // Hitam saat mengetik
+                    txtCari.setForeground(new Color(15, 23, 42));
                 }
             }
 
@@ -158,12 +158,10 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         tblPelanggan.getColumnModel().getColumn(2).setPreferredWidth(100);
         tblPelanggan.getColumnModel().getColumn(3).setPreferredWidth(110);
         
-        // Sembunyikan kolom ke-4 (Alamat)
         tblPelanggan.getColumnModel().getColumn(4).setMinWidth(0);
         tblPelanggan.getColumnModel().getColumn(4).setMaxWidth(0);
         tblPelanggan.getColumnModel().getColumn(4).setWidth(0);
 
-        // Kolom 0: ID
         tblPelanggan.getColumnModel().getColumn(0).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -175,18 +173,15 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         });
 
-        // Kolom 1: Nama Usaha (Font pas & elegan, persis gambar samping) + Sub-teks Alamat
         tblPelanggan.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
                 JLabel lbl = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
                 String nama = value != null ? value.toString() : "";
                 
-                // Ambil alamat dari baris model indeks 4
                 Object alamatObj = table.getModel().getValueAt(row, 4);
                 String alamat = (alamatObj != null && !alamatObj.toString().trim().isEmpty()) ? alamatObj.toString() : "-";
 
-                // Styling HTML: Nama font plain 12px rapi, alamat 10px abu-abu
                 lbl.setText("<html><body style='font-family:Segoe UI; padding-left:4px;'>" + 
                             "<div style='color:#0F172A; font-weight:600; font-size:11px; line-height:120%;'>" + nama + "</div>" + 
                             "<div style='color:#64748B; font-weight:normal; font-size:9.5px; margin-top:2px;'>" + alamat + "</div>" + 
@@ -196,10 +191,8 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
             }
         });
 
-        // Kolom 2: Badge Pil Melengkung
         tblPelanggan.getColumnModel().getColumn(2).setCellRenderer(new BadgeJenisRenderer());
 
-        // Kolom 3: Kontak Telepon (format ...10001)
         tblPelanggan.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
@@ -274,14 +267,12 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
         try {
             List<Pelanggan> list = pelangganDAO.searchWithFilter(keyword, filterJenis);
             for (Pelanggan p : list) {
-                // TUKAR POSISI DISINI:
-                // Masukkan getAlamat() ke kolom kontak (indeks 3), dan getNomorTelepon() ke kolom alamat (indeks 4)
                 modelTabel.addRow(new Object[]{
                     p.getIdPelanggan(),
                     p.getNamaUsaha(),
                     p.getJenisPelanggan(),
-                    p.getAlamat(),        // Ini yang sebenarnya berisi nomor telepon
-                    p.getNomorTelepon()   // Ini yang sebenarnya berisi alamat
+                    p.getAlamat(),
+                    p.getNomorTelepon()
                 });
             }
         } catch (SQLException e) {
@@ -438,7 +429,7 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
 
         btnNavStatus.setBackground(new java.awt.Color(22, 27, 34));
         btnNavStatus.setForeground(new java.awt.Color(134, 148, 160));
-        btnNavStatus.setText("Status Pengiriman");
+        btnNavStatus.setText("PSPP");
         btnNavStatus.setBorderPainted(false);
         btnNavStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavStatus.setFocusPainted(false);
@@ -799,7 +790,6 @@ public class FormKelolaPelanggan extends javax.swing.JFrame {
                 cmbJenisPelanggan.setSelectedItem("Kontraktor");
             }
             
-            // Karena indeks 3 adalah nomor telepon dan indeks 4 adalah alamat:
             txtTelepon.setText(tblPelanggan.getModel().getValueAt(row, 3).toString());
             txtAlamat.setText(tblPelanggan.getModel().getValueAt(row, 4).toString());
             

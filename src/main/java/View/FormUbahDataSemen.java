@@ -1,8 +1,13 @@
 package view;
 
-import Config.Koneksi;
+import Model.AdminGudang;
 import Model.Pengguna;
+import Model.Semen;
 import Util.SesiPengguna;
+import dao.AdminGudangDAO;
+import dao.AdminGudangDAOInterface;
+import dao.SemenDAO;
+import dao.SemenDAOInterface;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -10,14 +15,11 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -32,22 +34,37 @@ import javax.swing.table.JTableHeader;
 
 public class FormUbahDataSemen extends javax.swing.JFrame {
 
+    private final SemenDAOInterface semenDAO;
+    private final AdminGudangDAOInterface adminGudangDAO;
     private DefaultTableModel modelKatalog;
 
     public FormUbahDataSemen() {
+        this.semenDAO = new SemenDAO();
+        this.adminGudangDAO = new AdminGudangDAO();
         initComponents();
+
+        // 1. Kunci ukuran Sidebar persis 240 x 680
+        panelSidebar.setPreferredSize(new Dimension(240, 680));
+        panelSidebar.setMinimumSize(new Dimension(240, 680));
+        panelSidebar.setMaximumSize(new Dimension(240, 32767));
+
+        // 2. Kunci ukuran Window Frame persis 1120 x 700 (Konsisten antar form)
+        this.setSize(1120, 700);
+        this.setPreferredSize(new Dimension(1120, 700));
+        this.setMinimumSize(new Dimension(1120, 700));
+        this.setMaximumSize(new Dimension(1120, 700));
+        this.setResizable(false);
         this.setLocationRelativeTo(null);
+
         rapikanTampilanTambahan();
         pasangLogoSidebar();
 
-        // Kosongkan form input awal
         bersihkanForm();
-
         tampilkanSesiPengguna();
         loadTabelKatalog();
         desainTabel();
 
-        // Klik baris pada tabel katalog otomatis mengisi form
+        // Klik baris pada tabel katalog otomatis mengisi form via Model & DAO
         tblKatalogSemen.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 int row = tblKatalogSemen.getSelectedRow();
@@ -74,6 +91,7 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
         txtSatuan.setText("");
         txtHargaJual.setText("");
         txtBatasAman.setText("");
+        tblKatalogSemen.clearSelection();
     }
 
     private void tampilkanSesiPengguna() {
@@ -81,16 +99,13 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
             Pengguna user = SesiPengguna.getPengguna();
             if (user != null) {
                 lblRoleText.setText(user.getNamaLengkap());
-
-                String sqlShift = "SELECT shift FROM admin_gudang WHERE id_pengguna = ?";
-                try (Connection conn = Koneksi.getKoneksi();
-                     PreparedStatement ps = conn.prepareStatement(sqlShift)) {
-                    ps.setInt(1, user.getIdPengguna());
-                    try (ResultSet rs = ps.executeQuery()) {
-                        String shift = rs.next() ? rs.getString("shift") : "Pagi";
-                        lblShiftText.setText("Shift Kerja: " + shift);
-                    }
+                String shift;
+                if (user instanceof AdminGudang) {
+                    shift = ((AdminGudang) user).getShift();
+                } else {
+                    shift = adminGudangDAO.getShiftByIdPengguna(user.getIdPengguna());
                 }
+                lblShiftText.setText("Shift Kerja: " + (shift != null ? shift : "Pagi"));
             }
         } catch (Exception ignored) {}
     }
@@ -105,22 +120,14 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
         };
         tblKatalogSemen.setModel(modelKatalog);
 
-        String sql = "SELECT id_semen, nama_semen, harga_jual_rp, stok_qty FROM semen ORDER BY id_semen ASC";
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                int id = rs.getInt("id_semen");
-                String nama = rs.getString("nama_semen");
-                double harga = rs.getDouble("harga_jual_rp");
-                int stok = rs.getInt("stok_qty");
-
+        try {
+            List<Semen> list = semenDAO.getAll();
+            for (Semen s : list) {
                 modelKatalog.addRow(new Object[]{
-                    String.valueOf(id),
-                    nama,
-                    "Rp " + formatRupiah(harga),
-                    formatRupiah(stok)
+                    String.valueOf(s.getIdSemen()),
+                    s.getNamaSemen(),
+                    "Rp " + formatRupiah(s.getHargaJual()),
+                    formatRupiah(s.getStok()) + " " + s.getSatuan()
                 });
             }
         } catch (SQLException ex) {
@@ -129,19 +136,15 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
     }
 
     private void muatDataSemenKeForm(int idSemen) {
-        String sql = "SELECT nama_semen, satuan, harga_jual_rp, batas_aman FROM semen WHERE id_semen = ?";
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, idSemen);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    txtNamaSemen.setText(rs.getString("nama_semen"));
-                    txtSatuan.setText(rs.getString("satuan"));
-                    txtHargaJual.setText(String.valueOf((long) rs.getDouble("harga_jual_rp")));
-                    txtBatasAman.setText(String.valueOf(rs.getInt("batas_aman")));
-                } else {
-                    JOptionPane.showMessageDialog(this, "Data semen dengan ID #" + idSemen + " tidak ditemukan!", "Tidak Ditemukan", JOptionPane.WARNING_MESSAGE);
-                }
+        try {
+            Semen s = semenDAO.getById(idSemen);
+            if (s != null) {
+                txtNamaSemen.setText(s.getNamaSemen());
+                txtSatuan.setText(s.getSatuan());
+                txtHargaJual.setText(String.valueOf((long) s.getHargaJual()));
+                txtBatasAman.setText(String.valueOf(s.getBatasAman()));
+            } else {
+                JOptionPane.showMessageDialog(this, "Data semen dengan ID #" + idSemen + " tidak ditemukan!", "Tidak Ditemukan", JOptionPane.WARNING_MESSAGE);
             }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Gagal mengambil data semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
@@ -188,17 +191,13 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
             }
 
             if (imgAsli != null) {
-                int rgbPojok = imgAsli.getRGB(0, 0);
-                Color warnaAsliLogo = new Color((rgbPojok >> 16) & 0xFF, (rgbPojok >> 8) & 0xFF, rgbPojok & 0xFF);
-                panelSidebar.setBackground(warnaAsliLogo);
-
                 Image imgResized = imgAsli.getScaledInstance(75, 75, Image.SCALE_SMOOTH);
                 lblLogoSidebar.setIcon(new ImageIcon(imgResized));
                 lblLogoSidebar.setText("");
             } else {
                 lblLogoSidebar.setText("<html><center><span style='color:#FFFFFF; font-size:20px; font-weight:bold;'>SL<span style='color:#EA580C;'>A</span>TE</span></center></html>");
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             lblLogoSidebar.setText("<html><center><h2 style='color:#FFFFFF;'>SLATE</h2></center></html>");
         }
     }
@@ -238,7 +237,7 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
             }
         });
 
-        // Format kolom HARGA JUAL (Hitam polos)
+        // Format kolom HARGA JUAL
         tblKatalogSemen.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -249,7 +248,7 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
             }
         });
 
-        // Format kolom STOK (Hitam polos)
+        // Format kolom STOK
         tblKatalogSemen.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -402,7 +401,7 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
         btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnLogout.setForeground(new java.awt.Color(239, 68, 68));
-        btnLogout.setText("Logout");
+        btnLogout.setText("KELUAR");
         btnLogout.setBorderPainted(false);
         btnLogout.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnLogout.setFocusPainted(false);
@@ -443,7 +442,7 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
                 .addComponent(btnNavUbahData, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavKelolaSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE)
                 .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
@@ -602,17 +601,17 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
                 .addGap(20, 20, 20)
                 .addGroup(panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblTabelTitle)
-                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE))
-                .addGap(20, 20, 20))
+                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.PREFERRED_SIZE, 411, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(22, Short.MAX_VALUE))
         );
         panelCardTabelLayout.setVerticalGroup(
             panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardTabelLayout.createSequentialGroup()
                 .addGap(18, 18, 18)
                 .addComponent(lblTabelTitle)
-                .addGap(14, 14, 14)
+                .addGap(18, 18, 18)
                 .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 481, Short.MAX_VALUE)
-                .addGap(20, 20, 20))
+                .addGap(16, 16, 16))
         );
 
         javax.swing.GroupLayout panelKontenLayout = new javax.swing.GroupLayout(panelKonten);
@@ -627,7 +626,7 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
                         .addComponent(panelCardForm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(20, 20, 20)
                         .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(43, Short.MAX_VALUE))
         );
         panelKontenLayout.setVerticalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -673,7 +672,6 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
             int id = Integer.parseInt(idStr);
             muatDataSemenKeForm(id);
 
-            // Sorot baris pada tabel jika ada
             for (int i = 0; i < tblKatalogSemen.getRowCount(); i++) {
                 if (tblKatalogSemen.getValueAt(i, 0).toString().equals(idStr)) {
                     tblKatalogSemen.setRowSelectionInterval(i, i);
@@ -715,25 +713,20 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
             return;
         }
 
-        String sql = "UPDATE semen SET nama_semen = ?, satuan = ?, harga_jual_rp = ?, batas_aman = ? WHERE id_semen = ?";
-        try (Connection conn = Koneksi.getKoneksi();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try {
+            // Inisiasi objek Model Semen
+            Semen semen = new Semen(id, nama, satuan, harga, 0, batas);
 
-            ps.setString(1, nama);
-            ps.setString(2, satuan);
-            ps.setDouble(3, harga);
-            ps.setInt(4, batas);
-            ps.setInt(5, id);
+            // Eksekusi murni melalui DAO
+            boolean sukses = semenDAO.updateData(semen);
 
-            int affected = ps.executeUpdate();
-            if (affected > 0) {
+            if (sukses) {
                 JOptionPane.showMessageDialog(this, "Data semen [ID: " + id + "] berhasil diperbarui!", "Pembaruan Berhasil", JOptionPane.INFORMATION_MESSAGE);
                 loadTabelKatalog();
                 bersihkanForm();
             } else {
                 JOptionPane.showMessageDialog(this, "ID Semen #" + id + " tidak ditemukan di database!", "Gagal Simpan", JOptionPane.ERROR_MESSAGE);
             }
-
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Gagal memperbarui data semen: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
@@ -752,6 +745,15 @@ public class FormUbahDataSemen extends javax.swing.JFrame {
     }//GEN-LAST:event_btnLogoutActionPerformed
 
     public static void main(String args[]) {
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception ignored) {}
+
         java.awt.EventQueue.invokeLater(() -> {
             new FormUbahDataSemen().setVisible(true);
         });

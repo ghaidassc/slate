@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dao;
 
 import Model.Semen;
@@ -21,4 +17,7 @@ public interface SemenDAOInterface {
     boolean updateStok(int id, int qty) throws SQLException;
     boolean catatPasokanMasuk(int idSemen, String batch, int jumlah, int idAdmin) throws SQLException;
     List<Semen> getStokMenipis() throws SQLException;
+    String getProdukPalingCepatHabis() throws SQLException;
+    int getTotalSemenKeluarHariIni() throws SQLException;
+    List<Object[]> getRiwayatPasokanMasuk() throws SQLException;
 }

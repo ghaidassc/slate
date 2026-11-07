@@ -397,7 +397,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     }
 
     @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         panelSidebar = new javax.swing.JPanel();
@@ -438,13 +438,9 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("SLATE - Pembaruan Status Pengiriman & Pembayaran");
-        setMinimumSize(new java.awt.Dimension(1120, 700));
-        setPreferredSize(new java.awt.Dimension(1120, 700));
         setResizable(false);
 
         panelSidebar.setBackground(new java.awt.Color(22, 27, 34));
-        panelSidebar.setMaximumSize(new java.awt.Dimension(240, 32767));
-        panelSidebar.setMinimumSize(new java.awt.Dimension(240, 680));
         panelSidebar.setPreferredSize(new java.awt.Dimension(240, 680));
 
         lblLogoSidebar.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -456,7 +452,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         lblDotStatus.setText("●");
 
         lblRoleText.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        lblRoleText.setForeground(new java.awt.Color(248, 248, 248));
+        lblRoleText.setForeground(new java.awt.Color(255, 255, 255));
         lblRoleText.setText("Staf Penjualan");
 
         lblWilayahText.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
@@ -469,21 +465,21 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBadgeUserLayout.createSequentialGroup()
                 .addGap(12, 12, 12)
-                .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(lblDotStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRoleText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblWilayahText, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         panelBadgeUserLayout.setVerticalGroup(
             panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelBadgeUserLayout.createSequentialGroup()
-                .addGap(6, 6, 6)
+                .addGap(8, 8, 8)
                 .addGroup(panelBadgeUserLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(lblDotStatus)
                     .addComponent(lblRoleText))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(2, 2, 2)
                 .addComponent(lblWilayahText)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
@@ -495,7 +491,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         btnNavMenu.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavMenu.setFocusPainted(false);
         btnNavMenu.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavMenu.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavMenu.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavMenu.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavMenuActionPerformed(evt);
@@ -509,7 +505,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         btnNavPelanggan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavPelanggan.setFocusPainted(false);
         btnNavPelanggan.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavPelanggan.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavPelanggan.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavPelanggan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavPelangganActionPerformed(evt);
@@ -523,7 +519,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         btnNavPesanan.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavPesanan.setFocusPainted(false);
         btnNavPesanan.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavPesanan.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavPesanan.setMargin(new java.awt.Insets(2, 16, 2, 14));
         btnNavPesanan.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnNavPesananActionPerformed(evt);
@@ -533,12 +529,12 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         btnNavStatus.setBackground(new java.awt.Color(234, 88, 12));
         btnNavStatus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         btnNavStatus.setForeground(new java.awt.Color(255, 255, 255));
-        btnNavStatus.setText("Status Pengiriman");
+        btnNavStatus.setText("PSPP");
         btnNavStatus.setBorderPainted(false);
         btnNavStatus.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnNavStatus.setFocusPainted(false);
         btnNavStatus.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        btnNavStatus.setMargin(new java.awt.Insets(2, 18, 2, 14));
+        btnNavStatus.setMargin(new java.awt.Insets(2, 16, 2, 14));
 
         btnLogout.setBackground(new java.awt.Color(33, 39, 50));
         btnLogout.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -558,25 +554,25 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelSidebarLayout.setHorizontalGroup(
             panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelSidebarLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
+                .addGap(16, 16, 16)
                 .addGroup(panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(lblLogoSidebar, javax.swing.GroupLayout.DEFAULT_SIZE, 210, Short.MAX_VALUE)
+                    .addComponent(lblLogoSidebar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelBadgeUser, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavMenu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavPelanggan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnNavPesanan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnNavStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnNavStatus, javax.swing.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE)
                     .addComponent(btnLogout, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
         panelSidebarLayout.setVerticalGroup(
             panelSidebarLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelSidebarLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
-                .addComponent(lblLogoSidebar, javax.swing.GroupLayout.PREFERRED_SIZE, 70, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15)
-                .addComponent(panelBadgeUser, javax.swing.GroupLayout.PREFERRED_SIZE, 46, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(25, 25, 25)
+                .addGap(24, 24, 24)
+                .addComponent(lblLogoSidebar, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(panelBadgeUser, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(26, 26, 26)
                 .addComponent(btnNavMenu, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavPelanggan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -584,7 +580,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 .addComponent(btnNavPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(8, 8, 8)
                 .addComponent(btnNavStatus, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 204, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 234, Short.MAX_VALUE)
                 .addComponent(btnLogout, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(20, 20, 20))
         );
@@ -593,14 +589,14 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
 
         panelKonten.setBackground(new java.awt.Color(248, 250, 252));
 
-        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        lblHeaderTitle.setForeground(new java.awt.Color(15, 15, 23));
-        lblHeaderTitle.setText("Pembaruan Status Pengiriman");
+        lblHeaderTitle.setFont(new java.awt.Font("Segoe UI", 1, 22)); // NOI18N
+        lblHeaderTitle.setForeground(new java.awt.Color(15, 23, 34));
+        lblHeaderTitle.setText("Pembaruan Status Pembayaran dan Pengiriman");
 
         panelCardForm.setBackground(new java.awt.Color(255, 255, 255));
 
         lblFormTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblFormTitle.setForeground(new java.awt.Color(15, 15, 23));
+        lblFormTitle.setForeground(new java.awt.Color(15, 23, 34));
         lblFormTitle.setText("Form Kontrol Status Logistik");
 
         lblIdPesanan.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
@@ -622,7 +618,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         lblRingkasanHeader.setText("RINGKASAN NOTA FAKTUR:");
 
         lblMitraNama.setFont(new java.awt.Font("Segoe UI", 1, 13)); // NOI18N
-        lblMitraNama.setForeground(new java.awt.Color(15, 15, 23));
+        lblMitraNama.setForeground(new java.awt.Color(15, 23, 34));
         lblMitraNama.setText("- Pilih Nota Pesanan -");
 
         lblTotalDanBayar.setFont(new java.awt.Font("Segoe UI", 0, 11)); // NOI18N
@@ -642,14 +638,14 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelRingkasanLayout.setHorizontalGroup(
             panelRingkasanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelRingkasanLayout.createSequentialGroup()
-                .addGap(14, 14, 14)
+                .addGap(12, 12, 12)
                 .addGroup(panelRingkasanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblRingkasanHeader)
-                    .addComponent(lblMitraNama, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblTotalDanBayar, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblMuatanSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lblTujuanAlamat, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(26, Short.MAX_VALUE))
+                    .addComponent(lblMitraNama, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblTotalDanBayar, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblMuatanSemen, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblTujuanAlamat, javax.swing.GroupLayout.PREFERRED_SIZE, 265, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(20, Short.MAX_VALUE))
         );
         panelRingkasanLayout.setVerticalGroup(
             panelRingkasanLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -672,12 +668,14 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         lblUbahStatusBayar.setText("Ubah Status Pembayaran");
 
         cmbUbahStatusBayar.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        cmbUbahStatusBayar.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Belum Lunas", "Lunas" }));
 
         lblUbahStatus.setFont(new java.awt.Font("Segoe UI", 1, 11)); // NOI18N
         lblUbahStatus.setForeground(new java.awt.Color(71, 85, 105));
         lblUbahStatus.setText("Ubah Status Pengiriman");
 
         cmbUbahStatus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        cmbUbahStatus.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Diproses", "Sedang Dikirim", "Diterima", "Dibatalkan" }));
 
         btnSimpanStatus.setBackground(new java.awt.Color(234, 88, 12));
         btnSimpanStatus.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -706,14 +704,14 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelCardFormLayout.setHorizontalGroup(
             panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardFormLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addGap(18, 18, 18)
                 .addGroup(panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(lblFormTitle)
                     .addComponent(lblIdPesanan)
                     .addGroup(panelCardFormLayout.createSequentialGroup()
-                        .addComponent(txtIdPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(10, 10, 10)
-                        .addComponent(btnCariNota, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE))
+                        .addComponent(txtIdPesanan, javax.swing.GroupLayout.PREFERRED_SIZE, 195, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(8, 8, 8)
+                        .addComponent(btnCariNota, javax.swing.GroupLayout.DEFAULT_SIZE, 95, Short.MAX_VALUE))
                     .addComponent(panelRingkasan, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(lblUbahStatusBayar)
                     .addComponent(cmbUbahStatusBayar, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -721,7 +719,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                     .addComponent(cmbUbahStatus, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnSimpanStatus, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(panelBoxInfoBatal, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(20, Short.MAX_VALUE))
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         panelCardFormLayout.setVerticalGroup(
             panelCardFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -754,7 +752,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelCardTabel.setBackground(new java.awt.Color(255, 255, 255));
 
         lblTabelTitle.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        lblTabelTitle.setForeground(new java.awt.Color(15, 15, 23));
+        lblTabelTitle.setForeground(new java.awt.Color(15, 23, 34));
         lblTabelTitle.setText("Daftar Antrean & Status Pengiriman");
 
         jScrollPaneTabel.setBorder(null);
@@ -775,7 +773,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        tblPengiriman.setRowHeight(50);
+        tblPengiriman.setRowHeight(48);
         tblPengiriman.setSelectionBackground(new java.awt.Color(241, 245, 249));
         tblPengiriman.setSelectionForeground(new java.awt.Color(15, 23, 42));
         tblPengiriman.setShowGrid(false);
@@ -786,20 +784,20 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelCardTabelLayout.setHorizontalGroup(
             panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardTabelLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addGap(18, 18, 18)
                 .addGroup(panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(lblTabelTitle)
-                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE))
-                .addGap(20, 20, 20))
+                    .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 430, Short.MAX_VALUE))
+                .addGap(18, 18, 18))
         );
         panelCardTabelLayout.setVerticalGroup(
             panelCardTabelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelCardTabelLayout.createSequentialGroup()
-                .addGap(18, 18, 18)
+                .addGap(16, 16, 16)
                 .addComponent(lblTabelTitle)
                 .addGap(14, 14, 14)
                 .addComponent(jScrollPaneTabel, javax.swing.GroupLayout.DEFAULT_SIZE, 485, Short.MAX_VALUE)
-                .addGap(20, 20, 20))
+                .addGap(18, 18, 18))
         );
 
         javax.swing.GroupLayout panelKontenLayout = new javax.swing.GroupLayout(panelKonten);
@@ -807,49 +805,49 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         panelKontenLayout.setHorizontalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelKontenLayout.createSequentialGroup()
-                .addGap(30, 30, 30)
+                .addGap(25, 25, 25)
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 600, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 500, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(panelKontenLayout.createSequentialGroup()
                         .addComponent(panelCardForm, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
+                        .addGap(16, 16, 16)
                         .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addContainerGap(25, Short.MAX_VALUE))
         );
         panelKontenLayout.setVerticalGroup(
             panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(panelKontenLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addComponent(lblHeaderTitle, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15)
+                .addGap(24, 24, 24)
+                .addComponent(lblHeaderTitle)
+                .addGap(18, 18, 18)
                 .addGroup(panelKontenLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(panelCardForm, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(panelCardTabel, javax.swing.GroupLayout.PREFERRED_SIZE, 555, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(35, Short.MAX_VALUE))
+                    .addComponent(panelCardTabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(25, Short.MAX_VALUE))
         );
 
         getContentPane().add(panelKonten, java.awt.BorderLayout.CENTER);
 
         pack();
         setLocationRelativeTo(null);
-    }// </editor-fold>                        
+    }// </editor-fold>//GEN-END:initComponents
 
-    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnNavMenuActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavMenuActionPerformed
         new FormMenuStaf().setVisible(true);
         this.dispose();
-    }
+    }//GEN-LAST:event_btnNavMenuActionPerformed
 
-    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnNavPelangganActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavPelangganActionPerformed
         new FormKelolaPelanggan().setVisible(true);
         this.dispose();
-    }
+    }//GEN-LAST:event_btnNavPelangganActionPerformed
 
-    private void btnNavPesananActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnNavPesananActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnNavPesananActionPerformed
         new FormPencatatanPesanan().setVisible(true);
         this.dispose();
-    }
+    }//GEN-LAST:event_btnNavPesananActionPerformed
 
-    private void btnSimpanStatusActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnSimpanStatusActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimpanStatusActionPerformed
         String idStr = txtIdPesanan.getText().trim();
         if (idStr.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Pilih atau cari ID Pesanan terlebih dahulu!", "Peringatan", JOptionPane.WARNING_MESSAGE);
@@ -867,7 +865,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         String statusKirimBaru = cmbUbahStatus.getSelectedItem().toString();
         String statusBayarBaru = cmbUbahStatusBayar.getSelectedItem().toString();
 
-        // 1. CEK ATURAN TIDAK BOLEH MUNDUR: Jika status lama sudah 'Dikirim', dilarang balik ke 'Diproses'
         int barisTabel = tblPengiriman.getSelectedRow();
         if (barisTabel != -1) {
             String statusKirimLama = tblPengiriman.getValueAt(barisTabel, 3).toString();
@@ -881,7 +878,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             }
         }
 
-        // 2. VALIDASI PEMBAYARAN: Barang tidak boleh Dikirim atau Diterima jika pembayaran Belum Lunas
         if (("Sedang Dikirim".equalsIgnoreCase(statusKirimBaru) || "Dikirim".equalsIgnoreCase(statusKirimBaru) || "Diterima".equalsIgnoreCase(statusKirimBaru)) 
                 && !"Lunas".equalsIgnoreCase(statusBayarBaru)) {
             JOptionPane.showMessageDialog(this,
@@ -893,7 +889,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             return;
         }
 
-        // 3. LOGIKA PEMBATALAN: Kembalikan stok semen ke gudang dan kunci status transaksi
         if ("Dibatalkan".equalsIgnoreCase(statusKirimBaru)) {
             int konfirmasi = JOptionPane.showConfirmDialog(this,
                     "Apakah Anda yakin ingin membatalkan pesanan semen #" + idPesanan + "?\n" +
@@ -930,7 +925,6 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             return;
         }
 
-        // 4. PEMBARUAN STATUS BIASA (Diproses, Sedang Dikirim, Diterima)
         try {
             boolean sukses = pesananService.perbaruiStatusPesananDanBayar(idPesanan, statusKirimBaru, statusBayarBaru);
             if (sukses) {
@@ -954,9 +948,9 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this, "Gagal memperbarui status: " + ex.getMessage(), "Error Database", JOptionPane.ERROR_MESSAGE);
         }
-    }
+    }//GEN-LAST:event_btnSimpanStatusActionPerformed
 
-    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {
+    private void btnLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLogoutActionPerformed
         int confirm = JOptionPane.showConfirmDialog(this,
                 "Apakah Anda yakin ingin keluar?",
                 "Konfirmasi Logout",
@@ -966,7 +960,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
             new FormLogin().setVisible(true);
             this.dispose();
         }
-    }
+    }//GEN-LAST:event_btnLogoutActionPerformed
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> {
@@ -974,7 +968,7 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
         });
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnCariNota;
     private javax.swing.JButton btnLogout;
     private javax.swing.JButton btnNavMenu;
@@ -1010,5 +1004,5 @@ public class FormStatusPengiriman extends javax.swing.JFrame {
     private javax.swing.JPanel panelSidebar;
     private javax.swing.JTable tblPengiriman;
     private javax.swing.JTextField txtIdPesanan;
-    // End of variables declaration                   
+    // End of variables declaration//GEN-END:variables
 }
