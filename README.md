@@ -61,7 +61,7 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="1849" height="561" alt="FlowchartSLATE (2)-Halaman Menu Staf Penjualan drawio" src="https://github.com/user-attachments/assets/af5c4e6c-7ea1-4f41-b081-7dfd3cb42cbb" />
 
 
-  <p align="justify">Setelah login berhasil, sistem mengambil data pesanan dari database dan menampilkan riwayat serta rekap pesanan. Staf Penjualan dapat memilih menu Kelola Data Pelanggan, Pencatatan Pesanan, atau Pembaruan Status Pembayaran/Pengiriman. Setiap menu akan mengarahkan pengguna ke fitur yang sesuai. Jika memilih keluar, sistem meminta konfirmasi sebelum kembali ke halaman login.
+  <p align="justify">Setelah login berhasil, sistem mengambil data pesanan dari database dan menampilkan riwayat serta rekap pesanan. Staf Penjualan dapat memilih menu Kelola Data Pelanggan, Pencatatan Pesanan, atau Pembaruan Status Pembayaran/Pengiriman. Setiap menu akan mengarahkan pengguna ke fitur yang sesuai. Jika memilih keluar, sistem meminta konfirmasi sebelum kembali ke halaman login.</p>
 <details>
 
 <details>
