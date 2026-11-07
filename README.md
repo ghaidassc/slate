@@ -10,5 +10,5 @@
 ## 🎨 Wajah Kelompok Kami
 
 <div align="center">
-<img width="200" height="200" alt="Logo SLATE" src= <img width="1182" height="476" alt="Screenshot 2026-11-06 174658" src="https://github.com/user-attachments/assets/71ec758b-dfba-4b00-91ea-fde44d4662ac" />
+<img width=1000" height="260" alt= src= <img width=800" height="400" alt="image" src="https://github.com/user-attachments/assets/61ce97fe-ed6d-4e15-a38c-a03961443ca7" />
 </div>
