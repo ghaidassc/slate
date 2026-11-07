@@ -313,7 +313,7 @@ Halaman ini digunakan Admin Gudang untuk memperbarui informasi semen yang sudah 
 
 **5. Tambah / Hapus Semen**
 
-![Tambah dan Hapus Semen](docs/screenshots/05-kelola-semen.png)
+<img width="1364" height="851" alt="image" src="https://github.com/user-attachments/assets/0d0e631e-8d9e-4ccb-9c2b-3fa240dc4866" />
 
 Fitur ini digunakan untuk menambahkan varian semen baru atau menghapus data semen yang sudah tidak diperlukan. Untuk menambahkan semen, Admin Gudang mengisi informasi produk yang dibutuhkan sebelum menyimpannya ke sistem. Sementara itu, penghapusan dilakukan dengan memilih ID semen yang sesuai dan mengonfirmasi tindakan tersebut.
 
