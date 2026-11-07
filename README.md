@@ -201,21 +201,70 @@ Setiap form di package `View` terdiri dari berkas `.java` dan `.form`. Berkas `.
 
 ## Penerapan 4 Pilar OOP
 
-**1. Encapsulation**
+### 1. Encapsulation
 
-Atribut pada class `Pengguna` (`idPengguna`, `namaPengguna`, `sandiPengguna`, `namaLengkap`, `role`) dideklarasikan `private` dan hanya dapat diakses lewat method getter. Prinsip yang sama dipakai pada `SesiPengguna`, yang menyimpan pengguna aktif dalam atribut `private static` dan hanya membukanya lewat `setPengguna()` dan `getPengguna()`, serta pada `Koneksi`, yang menyembunyikan URL, user, dan password database sebagai konstanta `private`.
+**Data hiding.** Class `Pelanggan` menggunakan access modifier `private` pada atributnya agar tidak dapat diakses secara langsung dari luar class. Data pelanggan dapat diakses dan diubah melalui method getter dan setter.
 
-**2. Inheritance**
+```java
+private int idPelanggan;
+private String namaUsaha;
+private String jenisPelanggan;
+private String nomorTelepon;
+private String alamat;
 
-`AdminGudang` dan `StafPenjualan` mewarisi `Pengguna` dan memanggil `super(...)` untuk mengisi data umum (id, nama pengguna, sandi, nama lengkap, dan role). Masing-masing menambahkan atribut khusus perannya, yaitu `shift` pada `AdminGudang` dan `wilayahPenjualan` pada `StafPenjualan`. Seluruh form pada package `View` juga mewarisi `javax.swing.JFrame`.
+public String getNamaUsaha() {
+    return namaUsaha;
+}
 
-**3. Polimorphysm**
+public void setNamaUsaha(String namaUsaha) {
+    this.namaUsaha = namaUsaha;
+}
+```
 
-`Pengguna` mendeklarasikan method abstrak `getDeskripsiHakAkses()`, yang di-override secara berbeda oleh `AdminGudang` dan `StafPenjualan`. Method `PenggunaDAO.login()` bertipe kembalian `Pengguna`, tetapi objek yang dikembalikan dapat berupa `AdminGudang` atau `StafPenjualan` sesuai role di database. Objek tersebut disimpan di `SesiPengguna` sebagai tipe `Pengguna`, lalu diperiksa dengan `instanceof` pada form staf untuk mengambil data khusus peran.
+### 2. Inheritance
 
-**4. Abstraction**
+**Pewarisan class.** `AdminGudang` mewarisi atribut dan method dari superclass `Pengguna` menggunakan keyword `extends`. Konstruktor `super()` digunakan untuk menginisialisasi data umum pengguna, sedangkan atribut `shift` menjadi atribut khusus Admin Gudang.
 
-`Pengguna` adalah abstract class yang mendefinisikan kerangka umum pengguna tanpa dapat diinstansiasi langsung, sehingga detail peran diserahkan kepada subclass. `PenggunaDAO` menyembunyikan query SQL login dari form, dan `Koneksi` menyembunyikan detail pembuatan koneksi JDBC, sehingga form cukup memanggil method tanpa mengetahui cara kerjanya.
+```java
+public class AdminGudang extends Pengguna {
+    private String shift;
+
+    public AdminGudang(int idPengguna, String namaPengguna,
+            String sandiPengguna, String namaLengkap, String shift) {
+        super(idPengguna, namaPengguna, sandiPengguna,
+                namaLengkap, "admin_gudang");
+        this.shift = shift;
+    }
+}
+```
+
+### 3. Polymorphism
+
+**Method overriding.** `AdminGudang` dan `StafPenjualan` meng-override method `getDeskripsiHakAkses()` dari superclass `Pengguna`. Method tersebut menghasilkan deskripsi hak akses yang berbeda sesuai dengan peran masing-masing pengguna.
+
+```java
+@Override
+public String getDeskripsiHakAkses() {
+    return "Hak Akses: Penjualan, Pelanggan, dan Status Pengiriman "
+            + "(Wilayah: " + wilayahPenjualan + ")";
+}
+```
+
+### 4. Abstraction
+
+**Abstract class dan abstract method.** Class `Pengguna` dideklarasikan sebagai `abstract` sehingga tidak dapat dibuat menjadi objek secara langsung. Class ini mendefinisikan method abstrak `getDeskripsiHakAkses()` yang harus diimplementasikan oleh class turunannya.
+
+```java
+public abstract class Pengguna {
+    private int idPengguna;
+    private String namaPengguna;
+    private String sandiPengguna;
+    private String namaLengkap;
+    private String role;
+
+    public abstract String getDeskripsiHakAkses();
+}
+```
 
 ## Cara Penggunaan Program
 
