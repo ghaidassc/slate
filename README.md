@@ -58,17 +58,26 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 <img width="438" height="534" alt="Screenshot 2026-11-07 165838" src="https://github.com/user-attachments/assets/bbe21fb9-9e6b-4313-bc51-69efffbd2d65" />
 
 
+
 <img width="422" height="514" alt="Screenshot 2026-11-07 165857" src="https://github.com/user-attachments/assets/cd849bfd-1e1c-4b75-be9c-9270f6380b37" />
 
 ## Penerapan 4 Pilar OOP
 
-**1. Enkapsulasi.** Atribut pada class `Pengguna` (`idPengguna`, `namaPengguna`, `sandiPengguna`, `namaLengkap`, `role`) dideklarasikan `private` dan hanya dapat diakses lewat method getter. Prinsip yang sama dipakai pada `SesiPengguna`, yang menyimpan pengguna aktif dalam atribut `private static` dan hanya membukanya lewat `setPengguna()` dan `getPengguna()`, serta pada `Koneksi`, yang menyembunyikan URL, user, dan password database sebagai konstanta `private`.
+**1. Encapsulation**
 
-**2. Pewarisan (Inheritance).** `AdminGudang` dan `StafPenjualan` mewarisi `Pengguna` dan memanggil `super(...)` untuk mengisi data umum (id, nama pengguna, sandi, nama lengkap, dan role). Masing-masing menambahkan atribut khusus perannya, yaitu `shift` pada `AdminGudang` dan `wilayahPenjualan` pada `StafPenjualan`. Seluruh form pada package `View` juga mewarisi `javax.swing.JFrame`.
+Atribut pada class `Pengguna` (`idPengguna`, `namaPengguna`, `sandiPengguna`, `namaLengkap`, `role`) dideklarasikan `private` dan hanya dapat diakses lewat method getter. Prinsip yang sama dipakai pada `SesiPengguna`, yang menyimpan pengguna aktif dalam atribut `private static` dan hanya membukanya lewat `setPengguna()` dan `getPengguna()`, serta pada `Koneksi`, yang menyembunyikan URL, user, dan password database sebagai konstanta `private`.
 
-**3. Polimorfisme.** `Pengguna` mendeklarasikan method abstrak `getDeskripsiHakAkses()`, yang di-override secara berbeda oleh `AdminGudang` dan `StafPenjualan`. Method `PenggunaDAO.login()` bertipe kembalian `Pengguna`, tetapi objek yang dikembalikan dapat berupa `AdminGudang` atau `StafPenjualan` sesuai role di database. Objek tersebut disimpan di `SesiPengguna` sebagai tipe `Pengguna`, lalu diperiksa dengan `instanceof` pada form staf untuk mengambil data khusus peran.
+**2. Inheritance**
 
-**4. Abstraksi.** `Pengguna` adalah abstract class yang mendefinisikan kerangka umum pengguna tanpa dapat diinstansiasi langsung, sehingga detail peran diserahkan kepada subclass. `PenggunaDAO` menyembunyikan query SQL login dari form, dan `Koneksi` menyembunyikan detail pembuatan koneksi JDBC, sehingga form cukup memanggil method tanpa mengetahui cara kerjanya.
+`AdminGudang` dan `StafPenjualan` mewarisi `Pengguna` dan memanggil `super(...)` untuk mengisi data umum (id, nama pengguna, sandi, nama lengkap, dan role). Masing-masing menambahkan atribut khusus perannya, yaitu `shift` pada `AdminGudang` dan `wilayahPenjualan` pada `StafPenjualan`. Seluruh form pada package `View` juga mewarisi `javax.swing.JFrame`.
+
+**3. Polimorphysm**
+
+`Pengguna` mendeklarasikan method abstrak `getDeskripsiHakAkses()`, yang di-override secara berbeda oleh `AdminGudang` dan `StafPenjualan`. Method `PenggunaDAO.login()` bertipe kembalian `Pengguna`, tetapi objek yang dikembalikan dapat berupa `AdminGudang` atau `StafPenjualan` sesuai role di database. Objek tersebut disimpan di `SesiPengguna` sebagai tipe `Pengguna`, lalu diperiksa dengan `instanceof` pada form staf untuk mengambil data khusus peran.
+
+**4. Abstraction**
+
+`Pengguna` adalah abstract class yang mendefinisikan kerangka umum pengguna tanpa dapat diinstansiasi langsung, sehingga detail peran diserahkan kepada subclass. `PenggunaDAO` menyembunyikan query SQL login dari form, dan `Koneksi` menyembunyikan detail pembuatan koneksi JDBC, sehingga form cukup memanggil method tanpa mengetahui cara kerjanya.
 
 ## Cara Penggunaan Program
 
