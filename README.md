@@ -139,7 +139,7 @@ Admin Gudang bertanggung jawab mengelola persediaan semen, termasuk menambahkan 
   <img width="1407" height="842" alt="Slate Logical" src="https://github.com/user-attachments/assets/bd6b1874-6ee8-4f24-a64a-3e4ee97dcacc" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">ERD Logical menggambarkan struktur entitas serta hubungan antarentitas dalam sistem. Entitas pengguna menerapkan konsep supertype/subtype yang dibagi menjadi staf_penjualan dan admin_gudang sesuai tanggung jawab masing-masing. Struktur ini mencakup pengelolaan pelanggan, pesanan, pembayaran, semen, serta pencatatan stok masuk. Setiap entitas saling terhubung untuk mendukung proses penjualan dan pergudangan secara terintegrasi.</p>
 </details>
 
 <details>
@@ -147,7 +147,7 @@ Admin Gudang bertanggung jawab mengelola persediaan semen, termasuk menambahkan 
   <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">ERD Relational merupakan penerapan struktur ERD Logical ke dalam bentuk tabel basis data yang dilengkapi atribut, primary key, dan foreign key. Staf_penjualan mencatat pesanan pelanggan yang terhubung dengan pembayaran melalui relasi One-to-One. Pesanan yang terdiri dari beberapa jenis semen dikelola melalui tabel detail_pesanan, sedangkan stok masuk dicatat oleh admin_gudang melalui tabel stok_masuk dan detail_stok_masuk. Hubungan antar tabel ini mendukung pencatatan transaksi, pembayaran, serta pembaruan persediaan semen.</p>
 </details>
 
 
