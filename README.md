@@ -125,7 +125,11 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
   <img width="2152" height="1817" alt="Untitled Diagram drawio (8)" src="https://github.com/user-attachments/assets/d4984b54-f2d5-4a0e-9622-35ebeeec23c6" />
 
 
-  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+  <p align="justify">Alur program diawali dengan use case LOGIN sebagai syarat akses bagi Staf Penjualan dan Admin Gudang. Staf Penjualan mengelola data pelanggan, mulai dari menambah pembeli, menyimpan alamat, hingga memperbarui informasi kontak. Staf juga membuat pesanan multi-item melalui pemilihan pelanggan, penambahan semen, pengecekan stok, perhitungan tagihan, dan pemotongan stok otomatis.
+
+Staf Penjualan dapat memperbarui status pengiriman dan melakukan pembatalan serta refund apabila diperlukan. Proses pembatalan mencakup pengembalian uang, pemulihan stok, dan pencatatan status pesanan. Staf juga dapat melihat riwayat pesanan, rincian barang, bukti pelunasan, total pendapatan, serta laporan semen paling laku.
+
+Admin Gudang bertanggung jawab mengelola persediaan semen, termasuk menambahkan stok masuk dan mengelola data semen. Admin dapat melihat katalog dan harga, mengubah informasi produk, serta menghapus data semen. Sistem juga menyediakan peringatan otomatis apabila stok berada di bawah batas aman. Seluruh aktivitas Admin Gudang diawali dengan proses LOGIN.</p>
 </details>
 
 ### ERD
