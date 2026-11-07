@@ -7,7 +7,7 @@
 
 ## Deskripsi Singkat
 
-SLATE adalah aplikasi desktop berbasis Java untuk mengelola operasional sebuah perusahaan semen yang memiliki pabrik sendiri. Sistem ini dipakai secara internal oleh dua peran, yaitu **Admin Gudang** yang mengelola data semen dan stok hasil produksi, serta **Staf Penjualan** yang mengelola data pelanggan, mencatat pesanan, dan memperbarui status pembayaran serta pengiriman. Seluruh data tersimpan di database MySQL sehingga stok, pesanan, dan riwayat transaksi selalu terpusat dan terdokumentasi.
+SLATE adalah sistem berbasis Java untuk mengelola operasional sebuah perusahaan semen yang memiliki pabrik sendiri. Sistem ini dipakai secara internal oleh dua peran, yaitu **Admin Gudang** yang mengelola data semen dan stok hasil produksi, serta **Staf Penjualan** yang mengelola data pelanggan, mencatat pesanan, dan memperbarui status pembayaran serta pengiriman. Seluruh data tersimpan di database MySQL sehingga stok, pesanan, dan riwayat transaksi selalu terpusat dan terdokumentasi.
 
 ## Fitur Utama Program
 
