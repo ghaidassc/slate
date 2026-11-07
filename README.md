@@ -171,39 +171,32 @@ ERD (Entity Relationship Diagram) adalah diagram yang menggambarkan struktur dat
 
 Project disusun dalam beberapa lapisan agar tanggung jawab tiap bagian terpisah, yaitu tampilan, logika bisnis, akses data, dan model data. Alur pemanggilan umumnya adalah `View → Service → DAO → Koneksi → MySQL`. Pada beberapa form, operasi sederhana memanggil DAO secara langsung.
 
-#### `Config`
-- `Koneksi.java`: mengatur koneksi JDBC ke MySQL (URL, user, dan password) dan menyediakan koneksi untuk seluruh DAO.
-
-#### `Main`
-- `Slate.java`: titik masuk program. Menjalankan `main()` dan menampilkan `FormLogin`.
-
-#### `Model`
-- `Pengguna`, `AdminGudang`, `StafPenjualan`: class data pengguna. `Pengguna` adalah abstract class yang diwarisi `AdminGudang` dan `StafPenjualan`.
-- `Pelanggan`, `Semen`, `Pesanan`, `Pembayaran`: class data yang merepresentasikan tabel di database.
-- `DetailNota`: menampung rincian nota pesanan (tanggal, total, pelanggan, alamat kirim, metode dan status bayar, serta daftar muatan) untuk ditampilkan.
-
-#### `dao`
-- `SemenDAO`, `PelangganDAO`, `PesananDAO`, `AdminGudangDAO`: *Data Access Object* yang menjalankan query SQL (tambah, ubah, hapus, dan ambil data).
-- `SemenDAOInterface`, `PelangganDAOInterface`, `PesananDAOInterface`, `AdminGudangDAOInterface`: interface yang menetapkan daftar method yang wajib dimiliki tiap DAO.
-- `PenggunaDAO`: menangani proses login, yaitu mencocokkan nama pengguna dan sandi, lalu mengembalikan objek `AdminGudang` atau `StafPenjualan` sesuai role.
-
-#### `Service`
-- `SemenService`, `PelangganService`, `PesananService`: lapisan logika bisnis di antara tampilan dan DAO. `PesananService` menyatukan proses pencatatan pesanan, pembaruan status, dan refund.
-
-#### `Util`
-- `SesiPengguna`: menyimpan data pengguna yang sedang login selama aplikasi berjalan.
-- `Validasi`: fungsi bantu validasi input (angka, nominal, nomor telepon 8 sampai 15 digit, dan konfirmasi y/n).
-
-#### `View`
-- `FormLogin`: halaman login dan pemilihan hak akses.
-- `FormMenuAdminGudang`, `FormMenuStaf`: menu utama Admin Gudang dan Staf Penjualan.
-- `FormTambahStokSemen`, `FormUbahDataSemen`, `FormKelolaSemen`: fitur Admin Gudang, yaitu tambah stok, ubah data semen, serta tambah dan hapus semen.
-- `FormKelolaPelanggan`, `FormPencatatanPesanan`, `FormStatusPengiriman`: fitur Staf Penjualan, yaitu kelola pelanggan, pencatatan pesanan, dan pembaruan status pembayaran/pengiriman.
-- `View.java`: pencetak tampilan teks untuk versi konsol.
-- `logo_slate.png.jpg`: logo yang ditampilkan di antarmuka.
-
-#### `Controller`
-- `Controller.java`: pengendali alur program versi konsol (login dan menu) yang bekerja bersama `View.java` dan `Util.Validasi`.
+- **`Config`**
+  - `Koneksi.java`: mengatur koneksi JDBC ke MySQL (URL, user, dan password) dan menyediakan koneksi untuk seluruh DAO.
+- **`Main`**
+  - `Slate.java`: titik masuk program. Menjalankan `main()` dan menampilkan `FormLogin`.
+- **`Model`**
+  - `Pengguna`, `AdminGudang`, `StafPenjualan`: class data pengguna. `Pengguna` adalah abstract class yang diwarisi `AdminGudang` dan `StafPenjualan`.
+  - `Pelanggan`, `Semen`, `Pesanan`, `Pembayaran`: class data yang merepresentasikan tabel di database.
+  - `DetailNota`: menampung rincian nota pesanan (tanggal, total, pelanggan, alamat kirim, metode dan status bayar, serta daftar muatan) untuk ditampilkan.
+- **`dao`**
+  - `SemenDAO`, `PelangganDAO`, `PesananDAO`, `AdminGudangDAO`: *Data Access Object* yang menjalankan query SQL (tambah, ubah, hapus, dan ambil data).
+  - `SemenDAOInterface`, `PelangganDAOInterface`, `PesananDAOInterface`, `AdminGudangDAOInterface`: interface yang menetapkan daftar method yang wajib dimiliki tiap DAO.
+  - `PenggunaDAO`: menangani proses login, yaitu mencocokkan nama pengguna dan sandi, lalu mengembalikan objek `AdminGudang` atau `StafPenjualan` sesuai role.
+- **`Service`**
+  - `SemenService`, `PelangganService`, `PesananService`: lapisan logika bisnis di antara tampilan dan DAO. `PesananService` menyatukan proses pencatatan pesanan, pembaruan status, dan refund.
+- **`Util`**
+  - `SesiPengguna`: menyimpan data pengguna yang sedang login selama aplikasi berjalan.
+  - `Validasi`: fungsi bantu validasi input (angka, nominal, nomor telepon 8 sampai 15 digit, dan konfirmasi y/n).
+- **`View`**
+  - `FormLogin`: halaman login dan pemilihan hak akses.
+  - `FormMenuAdminGudang`, `FormMenuStaf`: menu utama Admin Gudang dan Staf Penjualan.
+  - `FormTambahStokSemen`, `FormUbahDataSemen`, `FormKelolaSemen`: fitur Admin Gudang, yaitu tambah stok, ubah data semen, serta tambah dan hapus semen.
+  - `FormKelolaPelanggan`, `FormPencatatanPesanan`, `FormStatusPengiriman`: fitur Staf Penjualan, yaitu kelola pelanggan, pencatatan pesanan, dan pembaruan status pembayaran/pengiriman.
+  - `View.java`: pencetak tampilan teks untuk versi konsol.
+  - `logo_slate.png.jpg`: logo yang ditampilkan di antarmuka.
+- **`Controller`**
+  - `Controller.java`: pengendali alur program versi konsol (login dan menu) yang bekerja bersama `View.java` dan `Util.Validasi`.
 
 Setiap form di package `View` terdiri dari berkas `.java` dan `.form`. Berkas `.form` dipakai NetBeans GUI Builder, jadi keduanya harus selalu disimpan bersama.
 
