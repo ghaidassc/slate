@@ -52,7 +52,8 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 <details>
   <summary>Use Case SLATE</summary>
-  <img width="2488" height="1968" alt="Flowchart SLATE" src="LINK_GAMBAR_FLOWCHART" />
+  <img width="2488" height="1968" alt="Flowchart SLATE" src="<img width="2152" height="1817" alt="Untitled Diagram drawio (8)" src="https://github.com/user-attachments/assets/2ea794dd-66ae-44b5-ac5f-62db1e103a65" />
+" />
 
   <p align="justify">[Penjelasan alur utama program dari awal hingga akhir.]</p>
 </details>
