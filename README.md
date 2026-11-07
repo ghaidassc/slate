@@ -45,7 +45,7 @@ Aplikasi tidak memakai framework web. Seluruh antarmuka dibangun dengan Swing/AW
 
 ### Flowchart
 
-Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan pesanan, pembaruan status, menu admin, tambah stok, ubah data semen, tambah/hapus semen) tersedia di `docs/flowchart/FlowchartSLATE.drawio` dan dapat dibuka dengan [draw.io](https://app.diagrams.net). Ringkasan alur utamanya:
+Flowchart adalah diagram yang menggambarkan urutan langkah atau alur kerja suatu proses menggunakan simbol-simbol tertentu. Flowchart digunakan untuk menjelaskan bagaimana program berjalan, mulai dari proses awal, keputusan, hingga proses berakhir.
 
 <details>
   <summary>Halaman Menu Login</summary>
@@ -122,8 +122,10 @@ Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan p
 
 ### Use Case
 
+Use case diagram digunakan untuk memetakan hubungan interaksi antara aktor (pengguna atau sistem eksternal) dengan fungsi-fungsi utama yang disediakan oleh sistem program secara visual. 
+
 <details>
-  <summary>USE CASE SLATE</summary>
+  <summary>Use Case SLATE</summary>
   <img width="2152" height="1817" alt="Untitled Diagram drawio (8)" src="https://github.com/user-attachments/assets/d4984b54-f2d5-4a0e-9622-35ebeeec23c6" />
 
 
@@ -135,6 +137,8 @@ Admin Gudang bertanggung jawab mengelola persediaan semen, termasuk menambahkan 
 </details>
 
 ### ERD
+
+ERD (Entity Relationship Diagram) adalah diagram yang menggambarkan struktur database, termasuk entitas atau tabel, atribut, serta hubungan antarentitas. ERD digunakan untuk merancang database agar data tersusun dengan baik dan saling terhubung.
 
 <details>
   <summary>Logical</summary>
