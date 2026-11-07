@@ -12,7 +12,8 @@ SLATE adalah sistem berbasis Java untuk mengelola operasional sebuah perusahaan 
 ## Fitur Utama Program
 
 **Umum**
-- Login dengan pemilihan hak akses (Admin Gudang atau Staf Penjualan) dan logout dengan konfirmasi.
+- Login dengan pemilihan hak akses (Admin Gudang atau Staf Penjualan).
+- Logout dengan konfirmasi.
 
 **Admin Gudang**
 - Melihat daftar semen beserta harga, stok, dan batas aman. Semen yang stoknya berada di bawah atau sama dengan batas aman ditandai **Kritis**.
