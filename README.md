@@ -47,6 +47,77 @@ Aplikasi tidak memakai framework web. Seluruh antarmuka dibangun dengan Swing/AW
 
 Flowchart lengkap tiap halaman (login, menu staf, kelola pelanggan, pencatatan pesanan, pembaruan status, menu admin, tambah stok, ubah data semen, tambah/hapus semen) tersedia di `docs/flowchart/FlowchartSLATE.drawio` dan dapat dibuka dengan [draw.io](https://app.diagrams.net). Ringkasan alur utamanya:
 
+<details>
+  <summary>Halaman Menu Login</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Halaman Menu Staf Penjualan</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Fitur Kelola Data Pelanggan-Staf Penjualan</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Fitur Pencatatan Pesanan-Staf Penjualan</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Fitur Pembaruan Status Pembayaran/Pengiriman-Staf Penjualan</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Halaman Menu Admin Gudang</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Fitur Tambah Stok Semen-Admin Gudang</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Fitur Ubah Data Semen-Admin Gudang</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
+
+<details>
+  <summary>Fitur Tambah/Hapus Semen-Admin Gudang</summary>
+  <img width="1535" height="1032" alt="Slate Relational Revisi" src="https://github.com/user-attachments/assets/c17ee1e4-fff0-4310-a1cc-77c9f5fc354b" />
+
+
+  <p align="justify">[Tuliskan penjelasan diagram di sini. Jelaskan tujuan diagram, aktor atau komponen yang terlibat, serta alur atau hubungan yang digambarkan.]</p>
+</details>
 
 ### Use Case
 
